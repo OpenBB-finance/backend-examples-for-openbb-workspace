@@ -109,7 +109,7 @@ async def search_symbols(
                     "full_name": f"{item['exchange']}:{item['symbol']}",
                     "description": (
                         f"{item['name'].replace(' Futures', '')} "
-                        + f"({multiplier} x {item['contract_unit']})",
+                        + f"({multiplier} x {item['contract_unit']})"
                     ),
                     "type": "forex" if item["asset_class"] == "Currency" else "futures",
                 }
