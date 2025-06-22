@@ -21,7 +21,7 @@ def download_asset_symbols(
     date: Optional[str] = None,
     include_spreads: bool = False,
 ) -> DataFrame:
-    """Download the term structure for a given asset.
+    """Download the asset symbol definitions for a given asset.
 
     Instrument ID mapping are saved to the database under the `asset_definitions` table.
 
@@ -31,7 +31,7 @@ def download_asset_symbols(
     cme_database : CmeDatabase
         An instance of the CmeDatabase singleton.
     asset : str
-        The asset for which to download the term structure.
+        The asset for which to download the symbol definitions.
         Asset should be an asset from the `asset_names` asset column.
     date : Optional[str]
         The date for which to get asset definitions for.
