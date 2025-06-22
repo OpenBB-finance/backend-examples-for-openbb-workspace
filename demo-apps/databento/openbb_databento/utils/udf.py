@@ -1,5 +1,5 @@
-
 """UDF Database Class for CME Data."""
+
 # pylint: disable=too-many-instance-attributes,too-many-public-methods,no-member,too-many-nested-blocks,too-many-locals,too-many-arguments,too-many-branches,too-many-statements,import-outside-toplevel
 # flake8: noqa: E402
 from typing import Annotated, Optional
@@ -55,7 +55,8 @@ class UdfDatabase:
     def has_intraday(self) -> bool:
         """Check if the database has intraday data."""
         return any(
-            table.split("_")[1][0].isdigit() and table.split("_")[1][-1] in ["s", "m", "h"]
+            table.split("_")[1][0].isdigit()
+            and table.split("_")[1][-1] in ["s", "m", "h"]
             for table in self.database().table_names  # pylint: disable=E1101
             if "_" in table
         )
@@ -70,10 +71,12 @@ class UdfDatabase:
         """
         exchanges = self.database().fetchall(exchanges_query)  # pylint: disable=E1101
         output = [{"name": "All Exchanges", "value": ""}]
-        output.extend([
-            {"name": row["exchange_name"], "value": row["exchange"]}
-            for row in exchanges
-        ])
+        output.extend(
+            [
+                {"name": row["exchange_name"], "value": row["exchange"]}
+                for row in exchanges
+            ]
+        )
         return output
 
     @property
@@ -97,7 +100,9 @@ class UdfDatabase:
         """Get all unique symbols."""
         if not hasattr(self, "_continuous_assets") or self._continuous_assets.empty:
             db = self.database()
-            ohlcv_tables = [table for table in db.table_names if table.startswith("ohlcv_")]
+            ohlcv_tables = [
+                table for table in db.table_names if table.startswith("ohlcv_")
+            ]
 
             if not ohlcv_tables:
                 return DataFrame()
@@ -126,14 +131,16 @@ class UdfDatabase:
     def get_ohlcv_data(self, symbol: str, interval: str) -> DataFrame:
         """Get OHLCV data from the database for a given symbol and interval."""
         interval_str = (
-            "1d" if interval[-1] in ["D", "W", "M"]
-            else "1h" if interval in ("60", 60)
-            else f"{interval}"
+            "1d"
+            if interval[-1] in ["D", "W", "M"]
+            else "1h" if interval in ("60", 60) else f"{interval}"
         )
         table_name = f"ohlcv_{interval_str.lower()}_continuous"
 
         if table_name not in self.database().table_names:
-            self.database().logger.error("Table %s does not exist in the database.", table_name)
+            self.database().logger.error(
+                "Table %s does not exist in the database.", table_name
+            )
             return DataFrame()
 
         query = f"""
@@ -154,12 +161,16 @@ class UdfDatabase:
             return self._symbol_info_cache[cache_key]
 
         interval_str = (
-            "1d" if interval and interval[-1] in ["D", "W", "M"] else f"{interval or '1d'}"
+            "1d"
+            if interval and interval[-1] in ["D", "W", "M"]
+            else f"{interval or '1d'}"
         )
         table_name = f"ohlcv_{interval_str.lower()}_continuous"
 
         if table_name not in self.database().table_names:
-            self.database().logger.error("Table %s does not exist in the database.", table_name)
+            self.database().logger.error(
+                "Table %s does not exist in the database.", table_name
+            )
             return {}
 
         query = f"""
@@ -172,7 +183,7 @@ class UdfDatabase:
         ORDER BY date DESC
         LIMIT 1;
         """
-        symbol_info = (self.database().fetchone(query, params=(symbol,)))
+        symbol_info = self.database().fetchone(query, params=(symbol,))
 
         if not symbol_info:
             return {"s": "no_data"}
@@ -182,13 +193,20 @@ class UdfDatabase:
             "ticker": symbol,
         }
         udf_symbol_info.update(self.trading_session)
-        udf_symbol_info.update(self.compute_pricescacle(symbol_info["min_price_increment"]))
+        udf_symbol_info.update(
+            self.compute_pricescacle(symbol_info["min_price_increment"])
+        )
 
-        asset_type = "commodity" if symbol_info["asset_class"] in [
-            "Commodity/Agriculture",
-            "Energy",
-            "Metals",
-        ] else "currency" if symbol_info["asset_class"] == "Currency" else "futures"
+        asset_type = (
+            "commodity"
+            if symbol_info["asset_class"]
+            in [
+                "Commodity/Agriculture",
+                "Energy",
+                "Metals",
+            ]
+            else "currency" if symbol_info["asset_class"] == "Currency" else "futures"
+        )
 
         udf_symbol_info["type"] = asset_type
         udf_symbol_info["exchange"] = symbol_info["exchange"]
@@ -203,16 +221,15 @@ class UdfDatabase:
         )
         udf_symbol_info["description"] = symbol_info["name"] + " - " + unit
         map_of_measure = {v: k for k, v in unit_of_measure_map.items()}
-        udf_symbol_info["unit_id"] = (
-            map_of_measure.get(symbol_info["contract_unit"], symbol_info["contract_unit"])
+        udf_symbol_info["unit_id"] = map_of_measure.get(
+            symbol_info["contract_unit"], symbol_info["contract_unit"]
         )
         symbol_has_intraday = False
         seconds_multipliers: list = []
         has_seconds = False
         supported_resolutions: list = []
-
+        table_names = self.database().table_names
         if self.has_intraday:
-            table_names = self.database().table_names
             for table in table_names:
                 if table.startswith("ohlcv_") and table.endswith("_continuous"):
                     # e.g., "1m", "30s", "1h"
@@ -265,15 +282,18 @@ class UdfDatabase:
             """
             supported_resolutions.extend(["D", "W", "M"])
             udf_symbol_info["has_daily"] = True
-            udf_symbol_info["has_weekly_and_monthly"] =  True
+            udf_symbol_info["has_weekly_and_monthly"] = True
 
         udf_symbol_info["has_intraday"] = symbol_has_intraday
 
-
         # Sort numeric resolutions and append 'D', 'W', 'M' at the end in order
-        numeric_resolutions = sorted([r for r in supported_resolutions if r.isdigit()], key=int)
+        numeric_resolutions = sorted(
+            [r for r in supported_resolutions if r.isdigit()], key=int
+        )
         period_resolutions = [r for r in ["D", "W", "M"] if r in supported_resolutions]
-        udf_symbol_info["supported_resolutions"] = numeric_resolutions + period_resolutions
+        udf_symbol_info["supported_resolutions"] = (
+            numeric_resolutions + period_resolutions
+        )
         udf_symbol_info["volume_precision"] = 1
         udf_symbol_info["currency_code"] = symbol_info["currency"]
         udf_symbol_info["original_currency_code"] = (
@@ -297,12 +317,12 @@ class UdfDatabase:
     def compute_pricescacle(min_price_increment: float) -> dict:
         """
         Calculate pricescale and minmov for TradingView pricescale.
-        
+
         Parameters
         ----------
         min_price_increment : float
             The minimum price increment (tick size) for the security
-            
+
         Returns
         -------
         dict
@@ -318,7 +338,7 @@ class UdfDatabase:
         decimal_places = abs(tick_decimal.as_tuple().exponent)  # type: ignore
 
         # Calculate pricescale as 10^decimal_places
-        pricescale = 10 ** decimal_places
+        pricescale = 10**decimal_places
 
         # Calculate minmov as tick_size * pricescale
         minmov = int(tick_decimal * pricescale)
