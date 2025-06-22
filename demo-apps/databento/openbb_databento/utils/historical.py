@@ -1,12 +1,14 @@
 """Historical data utilities."""
+
 from typing import Literal, Optional
 from datetime import datetime, timedelta
 
 from databento.common.error import BentoError
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, to_datetime
 from pytz import timezone
 
 # pylint: disable=R0913,R0914,R0915,R0917
+
 
 def clean_historical_continuous(
     cme_database,
@@ -48,10 +50,12 @@ def clean_historical_continuous(
 
     dataframe["date"] = (
         dataframe["date"].dt.tz_convert("America/Chicago")
-        if "date" in dataframe.columns else None
+        if "date" in dataframe.columns
+        else None
     )
 
     return dataframe
+
 
 def fetch_historical_continuous(
     cme_database,
@@ -63,49 +67,49 @@ def fetch_historical_continuous(
     roll_rule: Optional[Literal["c", "n", "v"]] = None,
 ) -> DataFrame:
     """Get historical continuous futures data.
-    
-        This function will download data and write it to the database under the
-        `ohlcv_1{interval[0]}_continuous` table.
 
-        WARNING
-        -------
+    This function will download data and write it to the database under the
+    `ohlcv_1{interval[0]}_continuous` table.
 
-        This function should not be run to serve just-in-time data.
-        It will take a long time (several minutes +) to run,
-        and is intended for building a database of historical continuous futures data.
-    
-        Parameters
-        ----------
-        symbols : Optional[list[str]]
-            A list of asset symbols to download.
-            If None, defaults to all assets in `openbb_databento.utils.constants.live grid_assets`.
-            Assets should be an asset from the `futures_symbols` asset column.
-        start_date : Optional[str]
-            The start date for the data download in 'YYYY-MM-DD' format.
-            If None, defaults to '2013-01-01'.
-        end_date : Optional[str]
-            The end date for the data download in 'YYYY-MM-DD' format.
-            If None, defaults to yesterday's date.
-        interval : Literal["second", "minute", "hour", "day"]
-            The interval for the data download.
-            Defaults to 'day'.
-        contract : Optional[int]
-            The contract position to download.
-            If None, defaults to 0 (front month).
-        roll_rule : Optional[Literal["c", "n", "v"]]
-            The roll rule to apply when downloading the data.
-            Set as one of "c", "n", or "v" - calendar, open interest, or volume.
-            If None, defaults to "c".
+    WARNING
+    -------
 
-        Returns
-        -------
-        DataFrame
-            A DataFrame containing the historical continuous futures data.
-        
-        Raises
-        ------
-        BentoError
-            If there is an error with the Databento API request.
+    This function should not be run to serve just-in-time data.
+    It will take a long time (several minutes +) to run,
+    and is intended for building a database of historical continuous futures data.
+
+    Parameters
+    ----------
+    symbols : Optional[list[str]]
+        A list of asset symbols to download.
+        If None, defaults to all assets in `openbb_databento.utils.constants.live grid_assets`.
+        Assets should be an asset from the `futures_symbols` asset column.
+    start_date : Optional[str]
+        The start date for the data download in 'YYYY-MM-DD' format.
+        If None, defaults to '2013-01-01'.
+    end_date : Optional[str]
+        The end date for the data download in 'YYYY-MM-DD' format.
+        If None, defaults to yesterday's date.
+    interval : Literal["second", "minute", "hour", "day"]
+        The interval for the data download.
+        Defaults to 'day'.
+    contract : Optional[int]
+        The contract position to download.
+        If None, defaults to 0 (front month).
+    roll_rule : Optional[Literal["c", "n", "v"]]
+        The roll rule to apply when downloading the data.
+        Set as one of "c", "n", or "v" - calendar, open interest, or volume.
+        If None, defaults to "c".
+
+    Returns
+    -------
+    DataFrame
+        A DataFrame containing the historical continuous futures data.
+
+    Raises
+    ------
+    BentoError
+        If there is an error with the Databento API request.
     """
     # pylint: disable=import-outside-toplevel
     from openbb_databento.utils.database import CmeDatabase
@@ -130,15 +134,18 @@ def fetch_historical_continuous(
         )
 
     client = cme_database.db_client()
-    assets_df = cme_database.live_grid_assets.copy()
+    assets_df = cme_database.live_grid_assets.copy().drop_duplicates(
+        subset=["asset"], keep="last"
+    )
     names_map = assets_df.set_index("asset").name.to_dict()
-    assets = symbols or assets_df.asset.unique().tolist()
+    assets = symbols or assets_df.asset.tolist()
     symbols = [f"{a}.{roll_rule}.{contract}" for a in assets]
     end_date = (
         (datetime.now(tz=timezone("UTC")) - timedelta(days=1))
         .replace(hour=23, minute=59, second=59, microsecond=0)
         .isoformat()
-        if end_date is None else end_date
+        if end_date is None
+        else end_date
     )
     try:
         data = client.timeseries.get_range(
@@ -150,7 +157,33 @@ def fetch_historical_continuous(
             end=end_date,
         )
     except BentoError as e:
-        raise e from e
+        end_date = None
+        err = e.args[0]
+
+        if err.get("case") == "data_schema_not_fully_available":
+            msg = err.get("message", "")
+            end_date = str(msg.split(" and ")[1].split(".")[0])
+            end_date = (
+                to_datetime(end_date, format="%Y-%m-%dT%H:%M:%S", utc=True)
+                - timedelta(minutes=1)
+            ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            cme_database.logger.warning(
+                "Data schema not fully available. Using end date: %s", end_date
+            )
+
+        else:
+            raise BentoError(e) from e
+        try:
+            data = client.timeseries.get_range(
+                dataset="GLBX.MDP3",
+                schema=f"ohlcv-1{interval[0]}",
+                symbols=symbols,
+                start=start_date,
+                end=end_date,
+                stype_in="continuous",
+            )
+        except BentoError as exc:
+            raise exc from exc
 
     results = data.to_df().reset_index()
     results = results.rename(
@@ -160,11 +193,9 @@ def fetch_historical_continuous(
     )
 
     if interval == "day":
-        results["date"] = results["date"].dt.date
+        results.date = results.date.dt.date
     else:
-        results["date"] = (
-            results["date"].dt.tz_convert("America/Chicago")
-        )
+        results.date = results.date.dt.tz_convert("America/Chicago")
 
     contract_abbr = {
         0: "1st",
@@ -181,9 +212,7 @@ def fetch_historical_continuous(
         11: "12th",
     }
 
-    results.loc[:, "asset"] = results.symbol.apply(
-        lambda x: x.split(".")[0]
-    )
+    results.loc[:, "asset"] = results.symbol.apply(lambda x: x.split(".")[0])
     results.loc[:, "asset_class"] = results.asset.map(
         assets_df.set_index("asset").asset_class
     )
@@ -229,7 +258,7 @@ def fetch_historical_continuous(
         "high": "REAL",
         "low": "REAL",
         "close": "REAL",
-        "volume": "INTEGER"
+        "volume": "INTEGER",
     }
 
     results = DataFrame(results[list(dtypes)])
@@ -245,12 +274,10 @@ def fetch_historical_continuous(
             dtype=dtypes,
         )
     except Exception as e:  # pylint: disable=broad-except
-        cme_database.logger.error(
-            "Error writing to database: %s", e, exc_info=True
-        )
-
+        cme_database.logger.error("Error writing to database: %s", e, exc_info=True)
 
     return results
+
 
 # pylint: disable=R0912,W0612
 # flake8: noqa: F841
@@ -287,21 +314,27 @@ def update_historical_continuous_table(
     )
 
     metadata_cols = [
-        "asset", "asset_class", "exchange", "exchange_name", 
-        "contract_unit", "contract_unit_multiplier", "min_price_increment", 
-        "name", "currency"
+        "asset",
+        "asset_class",
+        "exchange",
+        "exchange_name",
+        "contract_unit",
+        "contract_unit_multiplier",
+        "min_price_increment",
+        "name",
+        "currency",
     ]
 
     # Create metadata mapping ONCE from existing table data
     metadata_map = (
-        all_metadata[metadata_cols]
-        .drop_duplicates("asset")
-        .set_index("asset")
+        all_metadata[metadata_cols].drop_duplicates("asset").set_index("asset")
     )
 
     # Chunk symbols into groups of 2000
     chunk_size = 2000
-    symbol_chunks = [db_symbols[i:i + chunk_size] for i in range(0, len(db_symbols), chunk_size)]
+    symbol_chunks = [
+        db_symbols[i : i + chunk_size] for i in range(0, len(db_symbols), chunk_size)
+    ]
 
     msg = (
         f"Processing {len(db_symbols)} symbols in "
@@ -363,7 +396,7 @@ def update_historical_continuous_table(
                     "Chunk %d - Case: %s -> Message: %s",
                     chunk_idx,
                     exc.args[0].get("case", "No case provided"),
-                    exc.args[0].get("message", "No additional error message provided")
+                    exc.args[0].get("message", "No additional error message provided"),
                 )
                 continue
 
@@ -413,10 +446,23 @@ def update_historical_continuous_table(
             column_order = existing_data.columns.tolist()
         else:
             column_order = [
-                "date", "instrument_id", "asset", "asset_class", "exchange",
-                "exchange_name", "contract_unit", "contract_unit_multiplier",
-                "min_price_increment", "name", "currency", "symbol",
-                "open", "high", "low", "close", "volume"
+                "date",
+                "instrument_id",
+                "asset",
+                "asset_class",
+                "exchange",
+                "exchange_name",
+                "contract_unit",
+                "contract_unit_multiplier",
+                "min_price_increment",
+                "name",
+                "currency",
+                "symbol",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
             ]
 
         # Reorder columns to match existing data structure
@@ -436,7 +482,7 @@ def update_historical_continuous_table(
 
         dtypes = {
             "date": "DATE",
-            "instrument_id": "INTEGER", 
+            "instrument_id": "INTEGER",
             "asset": "TEXT",
             "asset_class": "TEXT",
             "exchange": "TEXT",
@@ -451,7 +497,7 @@ def update_historical_continuous_table(
             "high": "REAL",
             "low": "REAL",
             "close": "REAL",
-            "volume": "INTEGER"
+            "volume": "INTEGER",
         }
 
         # Insert all new data
@@ -464,7 +510,9 @@ def update_historical_continuous_table(
                 method=None,
                 dtype=dtypes,
             )
-            cme_database.logger.info(f"Added {len(final_results)} new rows to {table_name}")
+            cme_database.logger.info(
+                f"Added {len(final_results)} new rows to {table_name}"
+            )
         except Exception as e:  # pylint: disable=broad-except
             cme_database.logger.error(f"Error writing to database: {e}", exc_info=True)
 
