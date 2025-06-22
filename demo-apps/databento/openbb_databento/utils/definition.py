@@ -1,10 +1,10 @@
 """Databento CME Definition Utilities."""
+
 from typing import Optional
 from datetime import datetime, timedelta
 import databento as db
 from databento.common.error import BentoError
 from pandas import DataFrame, concat
-from pytz import timezone
 
 from openbb_databento.utils.constants import (
     exchange_map,
@@ -12,6 +12,7 @@ from openbb_databento.utils.constants import (
     security_type_map,
     unit_of_measure_map,
 )
+
 
 # pylint: disable=R0914,R0915,R0912
 def download_asset_symbols(
@@ -71,7 +72,7 @@ def download_asset_symbols(
         data = client.timeseries.get_range(
             dataset="GLBX.MDP3",
             schema="definition",
-            symbols=[asset+ ".FUT"],
+            symbols=[asset + ".FUT"],
             start=start_date,
             end=end_date,
             stype_in="parent",
@@ -107,7 +108,7 @@ def download_asset_symbols(
             cme_database.logger.error(
                 "Case: %s -> Message: %s",
                 exc.args[0].get("case", "No case provided"),
-                exc.args[0].get("message", "No additional error message provided")
+                exc.args[0].get("message", "No additional error message provided"),
             )
             return DataFrame()
 
@@ -119,15 +120,19 @@ def download_asset_symbols(
             instrument_id_map[v[-1]["symbol"]] = k
 
     results = data.to_df().reset_index()
-    results = results.query("instrument_id.astype('string').isin(@instrument_id_map.keys())").copy()
+    results = results.query(
+        "instrument_id.astype('string').isin(@instrument_id_map.keys())"
+    ).copy()
     results.loc[:, "date"] = results["ts_recv"].dt.date
 
-    results = results.groupby(
-        ["date", "raw_symbol"]
-    ).agg("last").reset_index().copy()
-    results = DataFrame(
-        results[["date", "instrument_id", "symbol", "activation", "expiration"]]
-    ).sort_values(by="expiration").reset_index(drop=True)
+    results = results.groupby(["date", "raw_symbol"]).agg("last").reset_index().copy()
+    results = (
+        DataFrame(
+            results[["date", "instrument_id", "symbol", "activation", "expiration"]]
+        )
+        .sort_values(by="expiration")
+        .reset_index(drop=True)
+    )
     results = results.rename(
         columns={
             "activation": "first_trade_date",
@@ -154,10 +159,7 @@ def download_asset_symbols(
     if (
         asset_in_table is False
         or date_in_table is False
-        or (
-            asset_in_table is True
-            and date_in_table is False
-        )
+        or (asset_in_table is True and date_in_table is False)
     ):
         try:
             cme_database.safe_to_sql(
@@ -188,7 +190,7 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
     replace: bool = True,
 ) -> DataFrame:
     """Generate a database of symbols from the CME Globex MDP 3.0 feed.
-    
+
     Parameters
     ----------
 
@@ -215,13 +217,12 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
         .set_index("asset")[["name"]]
         .to_dict()["name"]
     )
-    now = datetime.now(tz=timezone("America/Chicago")).replace(hour=0, minute=0, second=0, microsecond=0)
+    now = datetime.strptime(date, "%Y-%m-%d") if date else datetime.now()
     # If today is Saturday or Sunday, set 'now' to the previous Friday
     if now.weekday() in [5, 6]:  # Saturday
         now = now - timedelta(days=1 if now.weekday() == 5 else 2)
 
-    now = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_date = now - timedelta(days=3 if now.weekday() == 0 else 1)
+    start_date = now.strftime("%Y-%m-%d")
 
     try:
         # Get all symbols from the database.
@@ -230,17 +231,46 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
             schema="definition",
             symbols="ALL_SYMBOLS",
             stype_in="parent",
-            start=date or start_date.strftime("%Y-%m-%d"),
+            start=start_date,
         )
     except BentoError as e:
-        raise e from e
+        end_date = None
+        err = e.args[0]
+
+        if err.get("case") == "data_end_after_available_end":
+            msg = err.get("message", "")
+            end_date = msg.split("'")[1].replace(" ", "T") if "'" in msg else None
+        else:
+            err_msg = (
+                f"Failed to download futures symbols data"
+                f" -> case: {err.get('case', 'No case provided')}"
+                f" -> message: {err.get('message', 'No additional error message provided')}"
+            )
+            cme_database.logger.error(err_msg)
+
+            return DataFrame()
+
+        try:
+            data = client.timeseries.get_range(
+                dataset="GLBX.MDP3",
+                schema="definition",
+                symbols="ALL_SYMBOLS",
+                start=start_date,
+                end=end_date,
+                stype_in="parent",
+            )
+        except BentoError as exc:
+            cme_database.logger.error(
+                "Case: %s -> Message: %s",
+                exc.args[0].get("case", "No case provided"),
+                exc.args[0].get("message", "No additional error message provided"),
+            )
+            return DataFrame()
 
     df = data.to_df().reset_index()
 
     if df.empty:
-        raise BentoError(
-            "No data found for the specified date range."
-        )
+        raise BentoError("No data found for the specified date range.")
 
     df = df[df["instrument_class"] == db.InstrumentClass.FUTURE]
     df = df.query("`asset` in @cme_futures_name_map.keys()")
@@ -264,21 +294,18 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
     output.loc[:, "exchange_timezone"] = "America/Chicago"
     output.loc[:, "security_type"] = df.security_type.map(security_type_map)
     output.loc[:, "asset_class"] = df.underlying_product.map(underlying_product_map)
-    output.loc[:, "first_trade_date"] = (
-        df.activation.dt.tz_convert("America/Chicago").dt.strftime("%Y-%m-%d")
-    )
-    output.loc[:, "expiration"] = (
-        df.expiration.dt.tz_convert("America/Chicago").dt.strftime("%Y-%m-%d %H:%M:%S%z")
-    )
+    output.loc[:, "first_trade_date"] = df.activation.dt.tz_convert(
+        "America/Chicago"
+    ).dt.strftime("%Y-%m-%d")
+    output.loc[:, "expiration"] = df.expiration.dt.tz_convert(
+        "America/Chicago"
+    ).dt.strftime("%Y-%m-%d %H:%M:%S%z")
     output.loc[:, "currency"] = df.currency
     output.loc[:, "min_price_increment"] = df.min_price_increment
     output.loc[:, "unit_of_measure"] = df.unit_of_measure.map(unit_of_measure_map)
     output.loc[:, "unit_of_measure_qty"] = df.unit_of_measure_qty
     output.loc[:, "source"] = "databento"
-    output.loc[:, "as_of_date"] = (
-        df.ts_event.dt.tz_convert("America/Chicago").dt.strftime("%Y-%m-%d %H:%M:%S%z")
-    )
-
+    output.loc[:, "as_of_date"] = df.ts_recv.dt.date
     try:
         if replace is True:
             cme_database.safe_to_sql(
@@ -302,7 +329,7 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
                     "unit_of_measure": "TEXT",
                     "unit_of_measure_qty": "REAL",
                     "source": "TEXT",
-                    "as_of_date": "DATETIME"
+                    "as_of_date": "DATE",
                 },
             )
 
@@ -311,13 +338,24 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
         if cme_database._futures_symbols.empty:
             cme_database._futures_symbols = output
 
-        output.loc[:, "date"] = output["as_of_date"].str[:10]
+        output.loc[:, "date"] = output.as_of_date.astype(str)
 
-        symbols_mapping = DataFrame(
-            output.copy()[
-                ["date", "asset", "instrument_id", "raw_symbol", "first_trade_date", "expiration"]
-            ]
-        ).sort_values(by=["asset", "expiration"]).reset_index(drop=True)
+        symbols_mapping = (
+            DataFrame(
+                output.copy()[
+                    [
+                        "date",
+                        "asset",
+                        "instrument_id",
+                        "raw_symbol",
+                        "first_trade_date",
+                        "expiration",
+                    ]
+                ]
+            )
+            .sort_values(by=["asset", "expiration"])
+            .reset_index(drop=True)
+        )
 
         has_table = "asset_definitions" in cme_database.table_names
         date_in_table = False
@@ -334,10 +372,9 @@ def create_futures_symbols_db(  # pylint: disable=R0914, R0915, W0212
                         f"SELECT * FROM asset_definitions WHERE date = '{output.date.max()}'"
                     )
                     if not old_defs.empty:
-                        merged_defs = (
-                            concat([old_defs, symbols_mapping], ignore_index=True)
-                            .drop_duplicates(keep='last')
-                        )
+                        merged_defs = concat(
+                            [old_defs, symbols_mapping], ignore_index=True
+                        ).drop_duplicates(keep="last")
                         _ = cme_database.safe_to_sql(
                             merged_defs,
                             "asset_definitions",
