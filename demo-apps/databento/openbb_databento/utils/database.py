@@ -1,4 +1,5 @@
 """Database utilities for OpenBB DataBento (async and sync versions)."""
+
 # pylint: disable=import-outside-toplevel,C0413,R0902,R0904,R0913,R0917
 # flake8: noqa: E402
 import logging
@@ -24,24 +25,26 @@ from openbb_databento.utils.constants import live_grid_assets
 
 from openbb_databento.utils.definition import (
     download_asset_symbols,
-    create_futures_symbols_db
+    create_futures_symbols_db,
 )
 from openbb_databento.utils.historical import (
     fetch_historical_continuous,
-    update_historical_continuous_table
+    update_historical_continuous_table,
 )
 from openbb_databento.utils.term_structure import download_term_structure
 
 db_logger = logging.getLogger("openbb_databento.utils.database")
 db_logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(levelname)s:     %(message)s')
+formatter = logging.Formatter("%(levelname)s:     %(message)s")
 handler.setFormatter(formatter)
 db_logger.addHandler(handler)
+
 
 def get_logger():
     """Get the logger instance."""
     return db_logger
+
 
 def dict_factory(cursor: sqlite3.Cursor, row: tuple) -> dict[str, Any]:
     """Convert sqlite3 Row to a dictionary."""
@@ -50,7 +53,7 @@ def dict_factory(cursor: sqlite3.Cursor, row: tuple) -> dict[str, Any]:
 
 class CmeDatabase:
     """Synchronous SQLite database utility for managing read/write operations and connections.
-    
+
     Initializes with a database path, allowing for read and write operations.
 
     This class is a singleton and all database connections will be closed on exit.
@@ -111,10 +114,10 @@ class CmeDatabase:
         db_file: Optional[str] = None,
         api_key: Optional[str] = None,
         row_factory: Optional[Callable[[sqlite3.Cursor, tuple], dict[str, Any]]] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the CME database.
-        
+
         Parameters
         ----------
 
@@ -155,16 +158,21 @@ class CmeDatabase:
 
         if db_file is None:
             db_file = os.environ.get("CME_DB_FILE") or os.path.join(
-                UserService().read_from_file().preferences.data_directory, "cme_database.db"
+                UserService().read_from_file().preferences.data_directory,
+                "cme_database.db",
             )
 
         self.row_factory = row_factory or dict_factory
         self.db_path = "file://" + db_file if "://" not in db_file else db_file
-        self._read_conn = sqlite3.connect(self.db_path, check_same_thread=False, uri=True)
+        self._read_conn = sqlite3.connect(
+            self.db_path, check_same_thread=False, uri=True
+        )
         self._read_conn.row_factory = self.row_factory
         self._read_conn.execute("PRAGMA journal_mode=WAL;")
         self._read_conn.execute("PRAGMA busy_timeout=30000;")
-        self._write_conn = sqlite3.connect(self.db_path, check_same_thread=False, uri=True)
+        self._write_conn = sqlite3.connect(
+            self.db_path, check_same_thread=False, uri=True
+        )
         self._write_conn.row_factory = self.row_factory
         self._write_conn.execute("PRAGMA journal_mode=WAL;")
         self._write_conn.execute("PRAGMA synchronous=NORMAL;")
@@ -196,8 +204,8 @@ class CmeDatabase:
                         "asset": "TEXT",
                         "asset_class": "TEXT",
                         "name": "TEXT",
-                        "asset_category": "TEXT"
-                    }
+                        "asset_category": "TEXT",
+                    },
                 )
             except sqlite3.OperationalError as exc:
                 raise RuntimeError(
@@ -225,7 +233,7 @@ class CmeDatabase:
                 if "database is locked" in str(e).lower() or "busy" in str(e).lower():
                     if attempt < max_retries - 1:
                         # Exponential backoff with jitter
-                        delay = (2 ** attempt) + random.uniform(0, 1)
+                        delay = (2**attempt) + random.uniform(0, 1)
                         time.sleep(delay)
                         continue
                 raise
@@ -235,7 +243,9 @@ class CmeDatabase:
         """Download the CME asset directory mapping."""
         # pylint: disable=import-outside-toplevel
         assets = DataFrame()
-        excel_file_url = "https://www.cmegroup.com/tools-information/files/quote-vendor-codes.xlsx"
+        excel_file_url = (
+            "https://www.cmegroup.com/tools-information/files/quote-vendor-codes.xlsx"
+        )
         r = make_request(excel_file_url)
         r.raise_for_status()
         file = BytesIO(r.content)
@@ -246,16 +256,15 @@ class CmeDatabase:
                 name, asset_type, symbol = (
                     sheet.iloc[1:, 0].str.strip(),
                     sheet.iloc[1:, 1].str.strip(),
-                    sheet.iloc[1:, 2].str.strip()
+                    sheet.iloc[1:, 2].str.strip(),
                 )
                 df = DataFrame([symbol.values, asset_type.values, name.values]).T
                 df.columns = ["asset", "asset_class", "name"]
                 df.loc[:, "asset_category"] = sheet_name
                 assets = concat([assets, df], axis=0)
 
-        assets = (
-            assets.reset_index(drop=True)
-            .query("asset != '--' and asset_class.isin(['Futures', 'Options'])")
+        assets = assets.reset_index(drop=True).query(
+            "asset != '--' and asset_class.isin(['Futures', 'Options'])"
         )
 
         return assets
@@ -277,15 +286,14 @@ class CmeDatabase:
 
         return self._live_grid_assets.copy()
 
-
     def set_live_grid_assets(
         self,
         symbols: Optional[list] = None,
         n_contracts: Optional[int] = None,
-        roll_rule: Optional[Literal["c", "n", "v"]] = None
+        roll_rule: Optional[Literal["c", "n", "v"]] = None,
     ) -> bool:
         """Set the live grid assets DataFrame from the 'futures_symbols' table.
-        
+
         Parameters
         ----------
 
@@ -336,7 +344,7 @@ class CmeDatabase:
             )
             contract_names = {
                 0: "1st Contract",
-                1: "2nd Contract", 
+                1: "2nd Contract",
                 2: "3rd Contract",
                 3: "4th Contract",
                 4: "5th Contract",
@@ -346,18 +354,19 @@ class CmeDatabase:
                 8: "9th Contract",
                 9: "10th Contract",
                 10: "11th Contract",
-                11: "12th Contract"
+                11: "12th Contract",
             }
 
             assets["name"] = assets.apply(
                 lambda row: (
-                    row["name"].split(" - ")[0] + " - "
+                    row["name"].split(" - ")[0]
+                    + " - "
                     + contract_names.get(
                         row["contract_position"],
-                        f"{row['contract_position'] + 1}th Contract"
+                        f"{row['contract_position'] + 1}th Contract",
                     )
                 ),
-                axis=1
+                axis=1,
             )
 
             assets.asset_class = Categorical(
@@ -369,13 +378,14 @@ class CmeDatabase:
                     "Energy",
                     "Metals",
                     "Commodity/Agriculture",
-                    "Other"
+                    "Other",
                 ],
                 ordered=True,
             )
 
             self._live_grid_assets = (
-                DataFrame(assets).sort_values(by=["asset_class", "asset", "contract_position"])
+                DataFrame(assets)
+                .sort_values(by=["asset_class", "asset", "contract_position"])
                 .reset_index(drop=True)
             )
             return True
@@ -401,11 +411,13 @@ class CmeDatabase:
                     "Energy",
                     "Metals",
                     "Commodity/Agriculture",
-                    "Other"
+                    "Other",
                 ],
                 ordered=True,
             )
-            df = df.sort_values(by=["asset_class", "name", "expiration"]).reset_index(drop=True)
+            df = df.sort_values(by=["asset_class", "name", "expiration"]).reset_index(
+                drop=True
+            )
         else:
             df = self._futures_symbols.copy()
 
@@ -420,26 +432,27 @@ class CmeDatabase:
             self._write_conn.close()
             self._write_conn = None
 
-    def fetchall(self, query: str, params: Optional[tuple] = None) -> list[dict[str, Any]]:
+    def fetchall(
+        self, query: str, params: Optional[tuple] = None
+    ) -> list[dict[str, Any]]:
         """Fetch all results from a query in the read connection."""
         params_tuple = params or ()
-        return self._read_conn.execute(query, params_tuple).fetchall() # type: ignore
+        return self._read_conn.execute(query, params_tuple).fetchall()  # type: ignore
 
     def fetchone(self, query: str, params: Optional[tuple] = None):
         """Fetch one result from a query in the read connection."""
         params_tuple = params or ()
-        return self._read_conn.execute(query, params_tuple).fetchone() # type: ignore
+        return self._read_conn.execute(query, params_tuple).fetchone()  # type: ignore
 
     def execute(self, query: str, params: Optional[tuple] = None) -> dict[str, int]:
         """Execute a write query in the write connection."""
+
         def _execute():
             params_tuple = params or ()
-            cur = self._write_conn.execute(query, params_tuple) # type: ignore
-            self._write_conn.commit() # type: ignore
-            return {
-                "rowcount": cur.rowcount,
-                "lastrowid": cur.lastrowid
-            }
+            cur = self._write_conn.execute(query, params_tuple)  # type: ignore
+            self._write_conn.commit()  # type: ignore
+            return {"rowcount": cur.rowcount, "lastrowid": cur.lastrowid}
+
         return self._retry_on_busy(_execute)
 
     @property
@@ -455,12 +468,12 @@ class CmeDatabase:
         columns = cur.fetchall()
         return [
             {
-            "cid": col[0],
-            "name": col[1],
-            "type": col[2],
-            "nullable": not bool(col[3]),
-            "default": col[4],
-            "primary_key": bool(col[5]),
+                "cid": col[0],
+                "name": col[1],
+                "type": col[2],
+                "nullable": not bool(col[3]),
+                "default": col[4],
+                "primary_key": bool(col[5]),
             }
             for col in columns
         ]
@@ -473,7 +486,9 @@ class CmeDatabase:
     def read_connection(self):
         """Return the read sqlite3 connection for use with pandas read_sql."""
         if self._read_conn is None:
-            self._read_conn = sqlite3.connect(self.db_path, check_same_thread=False, uri=True)
+            self._read_conn = sqlite3.connect(
+                self.db_path, check_same_thread=False, uri=True
+            )
             self._read_conn.row_factory = self.row_factory
             self._read_conn.execute("PRAGMA journal_mode=WAL;")
             self._read_conn.execute("PRAGMA busy_timeout=30000;")
@@ -483,7 +498,9 @@ class CmeDatabase:
     def write_connection(self):
         """Return the write sqlite3 connection for use with pandas to_sql."""
         if self._write_conn is None:
-            self._write_conn = sqlite3.connect(self.db_path, check_same_thread=False, uri=True)
+            self._write_conn = sqlite3.connect(
+                self.db_path, check_same_thread=False, uri=True
+            )
             self._write_conn.row_factory = self.row_factory
             self._write_conn.execute("PRAGMA journal_mode=WAL;")
             self._write_conn.execute("PRAGMA synchronous=NORMAL;")
@@ -492,6 +509,7 @@ class CmeDatabase:
 
     def safe_to_sql(self, df, table_name, **kwargs):
         """Thread-safe pandas to_sql operation."""
+
         def _write():
             result = df.to_sql(table_name, self._write_conn, **kwargs)
             self._write_conn.commit()  # type: ignore
@@ -501,8 +519,9 @@ class CmeDatabase:
 
     def safe_read_sql(self, query, **kwargs) -> DataFrame:
         """Thread-safe pandas read_sql operation."""
+
         def _read():
-            cursor = self._read_conn.execute(query, kwargs.get('params', ())) # type: ignore
+            cursor = self._read_conn.execute(query, kwargs.get("params", ()))  # type: ignore
             rows = cursor.fetchall()
             cursor.close()
 
@@ -533,7 +552,9 @@ class CmeDatabase:
         -------
         bool
         """
-        query = f"SELECT EXISTS(SELECT 1 FROM {table_name} WHERE {column_name} = '{value}')"
+        query = (
+            f"SELECT EXISTS(SELECT 1 FROM {table_name} WHERE {column_name} = '{value}')"
+        )
         result = self.fetchone(query)
 
         return bool(list(result.values())[0]) if result else False
@@ -556,7 +577,7 @@ class CmeDatabase:
         replace: bool = True,
     ) -> DataFrame:
         """Generate a database of symbols from the CME Globex MDP 3.0 feed.
-        
+
         Parameters
         ----------
         date : Optional[str]
@@ -583,10 +604,10 @@ class CmeDatabase:
         end_date: Optional[str] = None,
         interval: Optional[Literal["second", "minute", "hour", "day"]] = None,
         contract: Optional[int] = None,
-        roll_rule: Optional[Literal["c", "n", "v"]] = None
+        roll_rule: Optional[Literal["c", "n", "v"]] = None,
     ) -> DataFrame:
         """Get historical continuous futures data.
-        
+
         Use to bulk download many symbols by contract position - i.e, 0 is front month.
 
         This function will download data and write it to the database under the
@@ -598,7 +619,7 @@ class CmeDatabase:
         This function should not be run to serve just-in-time data.
         It will take a long time (several minutes +) to run,
         and is intended for building a database of historical continuous futures data.
-    
+
         Parameters
         ----------
         symbols : Optional[list[str]]
@@ -626,7 +647,7 @@ class CmeDatabase:
         -------
         DataFrame
             A DataFrame containing the historical continuous futures data.
-        
+
         Raises
         ------
         BentoError
@@ -639,7 +660,7 @@ class CmeDatabase:
             end_date=end_date,
             interval=interval,
             contract=contract,
-            roll_rule=roll_rule
+            roll_rule=roll_rule,
         )
 
     def update_historical_continuous(
@@ -647,7 +668,7 @@ class CmeDatabase:
         table_name: str,
     ) -> DataFrame:
         """Update the historical continuous futures data in the database.
-        
+
         This function will update the `ohlcv_1{interval[0]}_continuous` table
         with the latest data from the Databento API.
 
@@ -661,7 +682,7 @@ class CmeDatabase:
         -------
         DataFrame
             A DataFrame containing the updated historical continuous futures data.
-        
+
         Raises
         ------
         BentoError
@@ -679,9 +700,9 @@ class CmeDatabase:
         show_all: bool = False,
     ) -> DataFrame:
         """Download the asset symbols for a given asset.
-        
+
         Works with the `asset_names` table to ensure the asset exists.
-        
+
         Results are stored in the `asset_definitions` table, if they are not already present.
 
         The format of the table is suitable for mapping historical raw_symbol
@@ -716,7 +737,7 @@ class CmeDatabase:
             self.logger.error(
                 "Asset '%s' not found in the asset_names table. "
                 + "Please check the asset_names property.",
-                asset.upper()
+                asset.upper(),
             )
             return DataFrame()
 
@@ -726,7 +747,9 @@ class CmeDatabase:
         if date is None and not existing_assets.empty and show_all is True:
             existing_table = existing_assets.query("asset == @asset")
             if not existing_table.empty:
-                return existing_table.sort_values(by=["date", "expiration"]).reset_index(drop=True)
+                return existing_table.sort_values(
+                    by=["date", "expiration"]
+                ).reset_index(drop=True)
 
         if date is None and existing_assets.empty:
             return download_asset_symbols(
@@ -740,7 +763,9 @@ class CmeDatabase:
         asset_check = existing_assets.query("date == @date and asset == @asset")
 
         if not asset_check.empty:
-            return asset_check.sort_values(by=["date", "expiration"]).reset_index(drop=True)
+            return asset_check.sort_values(by=["date", "expiration"]).reset_index(
+                drop=True
+            )
 
         return download_asset_symbols(
             cme_database=self,
@@ -754,7 +779,7 @@ class CmeDatabase:
         date: Optional[str] = None,
     ) -> DataFrame:
         """Download the term structure for a given asset.
-        
+
         Parameters
         ----------
 
@@ -780,13 +805,14 @@ class CmeDatabase:
             return DataFrame()
 
         # Set default date to today if not provided
-        target_date = datetime.strptime(date, "%Y-%m-%d") if date else datetime.now().today()
+        target_date = (
+            datetime.strptime(date, "%Y-%m-%d") if date else datetime.now().today()
+        )
         target_date = (
             target_date
             if target_date.weekday() < 5
             else target_date - timedelta(days=target_date.weekday() - 4)
         ).strftime("%Y-%m-%d")
-
 
         # Check if term_structures table exists
         if "term_structures" not in table_names:
@@ -823,7 +849,7 @@ class CmeDatabase:
         self.logger.info(
             " Checking for the previous date for asset %s on date %s",
             asset,
-            target_date
+            target_date,
         )
 
         # Check if data exists for this asset and previous date

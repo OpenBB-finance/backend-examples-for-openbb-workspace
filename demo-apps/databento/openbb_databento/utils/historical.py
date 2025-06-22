@@ -9,6 +9,21 @@ from pytz import timezone
 
 # pylint: disable=R0913,R0914,R0915,R0917
 
+contract_abbr = {
+    0: "1st",
+    1: "2nd",
+    2: "3rd",
+    3: "4th",
+    4: "5th",
+    5: "6th",
+    6: "7th",
+    7: "8th",
+    8: "9th",
+    9: "10th",
+    10: "11th",
+    11: "12th",
+}
+
 
 def fetch_historical_continuous(
     cme_database,
@@ -93,6 +108,7 @@ def fetch_historical_continuous(
     names_map = assets_df.set_index("asset").name.to_dict()
     assets = symbols or assets_df.asset.tolist()
     symbols = [f"{a}.{roll_rule}.{contract}" for a in assets]
+
     end_date = (
         (datetime.now(tz=timezone("UTC")) - timedelta(days=1))
         .replace(hour=23, minute=59, second=59, microsecond=0)
@@ -150,21 +166,6 @@ def fetch_historical_continuous(
     else:
         results.date = results.date.dt.tz_convert("America/Chicago")
 
-    contract_abbr = {
-        0: "1st",
-        1: "2nd",
-        2: "3rd",
-        3: "4th",
-        4: "5th",
-        5: "6th",
-        6: "7th",
-        7: "8th",
-        8: "9th",
-        9: "10th",
-        10: "11th",
-        11: "12th",
-    }
-
     results.loc[:, "asset"] = results.symbol.apply(lambda x: x.split(".")[0])
     results.loc[:, "asset_class"] = results.asset.map(
         assets_df.set_index("asset").asset_class
@@ -177,8 +178,8 @@ def fetch_historical_continuous(
     )
     results.loc[:, "name"] = results.asset.apply(
         lambda x: (
-            f"{names_map.get(x)} - "
-            + f"{contract_abbr.get(contract, contract)} Contract"
+            f"{names_map.get(x, '').split(' - ')[0] if names_map.get(x) else x} - "
+            + f"{contract_abbr.get(contract, f'{contract + 1}th')} Contract"
         )
     )
     results.loc[:, "contract_unit"] = results.asset.map(
@@ -278,11 +279,16 @@ def update_historical_continuous_table(
         "currency",
     ]
 
-    # Create metadata mapping ONCE from existing table data
+    # Create metadata mapping from existing table data
     metadata_map = (
-        all_metadata[metadata_cols].drop_duplicates("asset").set_index("asset")
+        all_metadata[metadata_cols]
+        .drop_duplicates(subset=["asset"], keep="last")
+        .set_index("asset")
     )
-
+    # Get base names from metadata (strip any existing contract info)
+    base_names = metadata_map["name"].apply(
+        lambda x: x.split(" - ")[0] if " - " in x else x
+    )
     # Chunk symbols into groups of 2000
     chunk_size = 2000
     symbol_chunks = [
@@ -388,11 +394,37 @@ def update_historical_continuous_table(
         )
 
         # First, extract asset from symbol for new results
-        results["asset"] = results["symbol"].apply(lambda x: x.split(".")[0])
+        results.loc[:, "asset"] = results["symbol"].apply(lambda x: x.split(".")[0])
 
-        # Map metadata to new results using asset
-        for col in metadata_cols[1:]:  # Skip 'asset' since we already have it
+        # Extract contract position from symbol (e.g., SGC.c.0 -> 0, SGC.c.1 -> 1)
+        results.iloc["contract_position"] = results["symbol"].apply(
+            lambda x: int(x.split(".")[2])
+        )
+
+        # Map metadata to new results using asset (exclude 'name' - we'll generate it fresh)
+        for col in [
+            "asset_class",
+            "exchange",
+            "exchange_name",
+            "contract_unit",
+            "contract_unit_multiplier",
+            "min_price_increment",
+            "currency",
+        ]:
             results[col] = results["asset"].map(metadata_map[col])
+
+        # Generate proper names with correct contract position
+        results["name"] = results.apply(
+            lambda row: (
+                base_names.get(row["asset"], row["asset"])
+                + " - "
+                + contract_abbr.get(
+                    row["contract_position"],
+                    f"{row['contract_position'] + 1}th Contract",
+                )
+            ),
+            axis=1,
+        )
 
         # Get the column order from existing data if available, otherwise use a standard order
         if not existing_data.empty:

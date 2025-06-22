@@ -36,12 +36,11 @@ class UdfDatabase:
             "symbols_types": [
                 {"name": "All", "value": ""},
                 {"name": "Equity", "value": "equity"},
-                {"name": "Commodities", "value": "commodity"},
                 {"name": "Energy", "value": "energy"},
                 {"name": "FX", "value": "currency"},
                 {"name": "Interest Rates", "value": "interest_rates"},
                 {"name": "Metals", "value": "metals"},
-                {"name": "Agriculture", "value": "agriculture"},
+                {"name": "Commodity", "value": "commodity"},
             ],
             "units": supported_units,
         }

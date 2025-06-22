@@ -1,4 +1,5 @@
 """UDF router for OpenBB Databento app."""
+
 # pylint: disable=protected-access,too-many-arguments,too-many-locals,too-many-branches,too-many-statements,unused-argument
 from typing import Any, Optional, Annotated
 from datetime import datetime
@@ -23,9 +24,11 @@ def startup_event():
     udf_database.database().logger.info("Starting UDF database initialization...")
     UdfDatabase._continuous_assets = udf_database.continuous_assets
 
+
 router.add_event_handler("startup", startup_event)
 
 # The UDF config can be set in the UdfDatabase class.
+
 
 @router.get("/config", response_model=Any)
 async def udf_config(udf_database: DatabaseDependency):
@@ -67,8 +70,6 @@ async def search_symbols(
     if symbol_type != "":
         if symbol_type.lower() == "commodity":
             df = df.query("asset_class == 'Commodity/Agriculture'")
-        elif symbol_type.lower() == "agriculture":
-            df = df.query("asset_class == 'Commodity/Agriculture'")
         elif symbol_type.lower() == "metals":
             df = df.query("asset_class == 'Metals' or asset == 'HR'")
         elif symbol_type.lower() == "currency":
@@ -81,17 +82,23 @@ async def search_symbols(
             df = df.query("asset_class == 'Equity'")
 
     try:
-        search_results = df[
-            df.symbol.str.contains(query, case=False)
-            | df.asset.str.contains(query, case=False)
-            | df.asset_class.str.contains(query, case=False)
-            | df.name.str.contains(query, case=False)
-            | df.contract_unit.str.contains(query, case=False)
-        ].head(limit) if query else df.head(limit) if query != "" else df
+        search_results = (
+            df[
+                df.symbol.str.contains(query, case=False)
+                | df.asset.str.contains(query, case=False)
+                | df.asset_class.str.contains(query, case=False)
+                | df.name.str.contains(query, case=False)
+                | df.contract_unit.str.contains(query, case=False)
+            ].head(limit)
+            if query
+            else df.head(limit) if query != "" else df
+        )
 
-        for item in DataFrame(
-            search_results
-        ).sort_values(by=["asset_class", "asset", "name"]).to_dict("records"):
+        for item in (
+            DataFrame(search_results)
+            .sort_values(by=["asset_class", "asset", "name"])
+            .to_dict("records")
+        ):
             item["symbol"] = item["symbol"].replace(".c.", ".C.")
             multiplier = item.get("contract_unit_multiplier", 1)
             if multiplier is None or multiplier == 0:
