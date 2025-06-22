@@ -10,53 +10,6 @@ from pytz import timezone
 # pylint: disable=R0913,R0914,R0915,R0917
 
 
-def clean_historical_continuous(
-    cme_database,
-    dataframe: DataFrame,
-) -> DataFrame:
-    """Clean historical continuous futures data.
-
-    Parameters
-    ----------
-    cme_database : CmeDatabase
-        The CME database instance.
-    dataframe : DataFrame
-        The DataFrame containing the historical continuous futures data.
-
-    Returns
-    -------
-    DataFrame
-        A cleaned DataFrame with the necessary columns and types.
-    """
-    # pylint: disable=import-outside-toplevel
-    from openbb_databento.utils.database import CmeDatabase
-
-    if not isinstance(cme_database, CmeDatabase):
-        raise TypeError("cme_database must be an instance of CmeDatabase.")
-
-    if dataframe.empty:
-        return dataframe
-
-    assets_df = cme_database.live_grid_assets.copy()
-    names_map = assets_df.set_index("asset").name.to_dict()
-    assets = assets_df.asset.unique().tolist()
-
-    dataframe = dataframe.rename(
-        columns={
-            "ts_event": "date",
-            "instrument_id": "symbol",
-        }
-    )
-
-    dataframe["date"] = (
-        dataframe["date"].dt.tz_convert("America/Chicago")
-        if "date" in dataframe.columns
-        else None
-    )
-
-    return dataframe
-
-
 def fetch_historical_continuous(
     cme_database,
     symbols: Optional[list[str]] = None,
