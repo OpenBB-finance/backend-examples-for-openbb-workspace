@@ -397,7 +397,7 @@ def update_historical_continuous_table(
         results.loc[:, "asset"] = results["symbol"].apply(lambda x: x.split(".")[0])
 
         # Extract contract position from symbol (e.g., SGC.c.0 -> 0, SGC.c.1 -> 1)
-        results.iloc["contract_position"] = results["symbol"].apply(
+        results.loc[:, "contract_position"] = results["symbol"].apply(
             lambda x: int(x.split(".")[2])
         )
 
