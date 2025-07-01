@@ -80,11 +80,11 @@ def register_widget(widget_config):
         endpoint = widget_config.get("endpoint")
         if endpoint:
             # Add an id field to the widget_config if not already present
-            if "id" not in widget_config:
-                widget_config["id"] = endpoint
+            if "widgetId" not in widget_config:
+                widget_config["widgetId"] = endpoint
 
             # Use id as the key to allow multiple widgets per endpoint
-            widget_id = widget_config["id"]
+            widget_id = widget_config["widgetId"]
             WIDGETS[widget_id] = widget_config
 
         # Return the appropriate wrapper based on whether the function is async
@@ -1363,6 +1363,7 @@ Selected stocks: {stock_picker}
 # and when more than one is defined we are utilizing it to differentiate between them
 # since the endpoint cannot be used for the id for both anymore
 @register_widget({
+    # If we don't specify the widgetId, it will be the same as the endpoint
     "name": "Same Markdown Widget",
     "description": "Same markdown widget",
     "type": "markdown",
@@ -1370,14 +1371,14 @@ Selected stocks: {stock_picker}
     "gridData": {"w": 12, "h": 4},
 })
 @register_widget({
-    "id": "same_markdown_widget_2",
+    "widgetId": "same_markdown_widget_2",
     "name": "Same Markdown Widget 2",
     "description": "Same markdown widget 2",
     "type": "markdown",
     "endpoint": "same_markdown_widget",
     "gridData": {"w": 12, "h": 4},
 })
-@app.get("/markdown_widget")
+@app.get("/same_markdown_widget")
 def same_markdown_widget():
     """Returns a markdown widget"""
     return "# The very same widget"
