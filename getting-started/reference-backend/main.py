@@ -28,7 +28,8 @@ app = FastAPI(
 # This restricts which domains can access the API
 origins = [
     "https://pro.openbb.co",
-    "https://pro.openbb.dev"
+    "https://pro.openbb.dev",
+    "http://localhost:1420"
 ]
 
 # Configure CORS middleware to handle cross-origin requests
@@ -82,7 +83,9 @@ def register_widget(widget_config):
             if "id" not in widget_config:
                 widget_config["id"] = endpoint
 
-            WIDGETS[endpoint] = widget_config
+            # Use id as the key to allow multiple widgets per endpoint
+            widget_id = widget_config["id"]
+            WIDGETS[widget_id] = widget_config
 
         # Return the appropriate wrapper based on whether the function is async
         if asyncio.iscoroutinefunction(func):
@@ -1354,6 +1357,30 @@ def markdown_widget_with_multi_select_advanced_dropdown(stock_picker: str):
     return f"""# Multi Select Advanced Dropdown
 Selected stocks: {stock_picker}
 """
+
+# Define more than one widget with the same endpoint
+# Note that the id is used to identify the widget in the OpenBB Workspace
+# and when more than one is defined we are utilizing it to differentiate between them
+# since the endpoint cannot be used for the id for both anymore
+@register_widget({
+    "name": "Same Markdown Widget",
+    "description": "Same markdown widget",
+    "type": "markdown",
+    "endpoint": "same_markdown_widget",
+    "gridData": {"w": 12, "h": 4},
+})
+@register_widget({
+    "id": "same_markdown_widget_2",
+    "name": "Same Markdown Widget 2",
+    "description": "Same markdown widget 2",
+    "type": "markdown",
+    "endpoint": "same_markdown_widget",
+    "gridData": {"w": 12, "h": 4},
+})
+@app.get("/markdown_widget")
+def same_markdown_widget():
+    """Returns a markdown widget"""
+    return "# The very same widget"
 
 # This endpoint provides the list of available documents
 # It takes a category parameter to filter the documents
