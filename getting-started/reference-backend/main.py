@@ -1995,11 +1995,10 @@ def widget_managed_by_parameter_from_cell_click_on_table_widget(symbol: str = "A
     "description": "Plotly chart",
     "type": "chart",
     "endpoint": "plotly_chart",
-    "gridData": {"w": 40, "h": 15},
-    "raw": True
+    "gridData": {"w": 40, "h": 15}
 })
 @app.get("/plotly_chart")
-def get_plotly_chart(raw: bool = False):
+def get_plotly_chart():
     # Generate mock time series data
     mock_data = [
         {"date": "2023-01-01", "return": 2.5, "transactions": 1250},
@@ -2014,16 +2013,13 @@ def get_plotly_chart(raw: bool = False):
         {"date": "2023-01-10", "return": 3.5, "transactions": 1920}
     ]
 
-    if raw:
-        return mock_data
-    
     dates = [datetime.strptime(d["date"], "%Y-%m-%d") for d in mock_data]
     returns = [d["return"] for d in mock_data]
     transactions = [d["transactions"] for d in mock_data]
-    
+
     # Create the figure with secondary y-axis
     fig = go.Figure()
-    
+
     # Add the line trace for returns
     fig.add_trace(go.Scatter(
         x=dates,
@@ -2032,7 +2028,7 @@ def get_plotly_chart(raw: bool = False):
         name='Returns',
         line=dict(width=2)
     ))
-    
+
     # Add the bar trace for transactions
     fig.add_trace(go.Bar(
         x=dates,
@@ -2040,7 +2036,7 @@ def get_plotly_chart(raw: bool = False):
         name='Transactions',
         opacity=0.5
     ))
-    
+
     # Update layout with axis titles and secondary y-axis
     fig.update_layout(
         xaxis_title='Date',
@@ -2058,10 +2054,10 @@ def get_plotly_chart(raw: bool = False):
             x=1
         )
     )
-    
+
     # Update the bar trace to use secondary y-axis
     fig.data[1].update(yaxis="y2")
-    
+
     return json.loads(fig.to_json())
 
 
