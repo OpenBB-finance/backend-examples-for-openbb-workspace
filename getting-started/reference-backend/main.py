@@ -28,7 +28,8 @@ app = FastAPI(
 # This restricts which domains can access the API
 origins = [
     "https://pro.openbb.co",
-    "https://pro.openbb.dev"
+    "https://pro.openbb.dev",
+    "http://localhost:1420"
 ]
 
 # Configure CORS middleware to handle cross-origin requests
@@ -1994,11 +1995,11 @@ def widget_managed_by_parameter_from_cell_click_on_table_widget(symbol: str = "A
     "description": "Plotly chart",
     "type": "chart",
     "endpoint": "plotly_chart",
-    "gridData": {"w": 40, "h": 15}
+    "gridData": {"w": 40, "h": 15},
+    "raw": True
 })
-
 @app.get("/plotly_chart")
-def get_plotly_chart():
+def get_plotly_chart(raw: bool = False):
     # Generate mock time series data
     mock_data = [
         {"date": "2023-01-01", "return": 2.5, "transactions": 1250},
@@ -2012,6 +2013,9 @@ def get_plotly_chart():
         {"date": "2023-01-09", "return": 1.2, "transactions": 1480},
         {"date": "2023-01-10", "return": 3.5, "transactions": 1920}
     ]
+
+    if raw:
+        return mock_data
     
     dates = [datetime.strptime(d["date"], "%Y-%m-%d") for d in mock_data]
     returns = [d["return"] for d in mock_data]
@@ -2060,6 +2064,84 @@ def get_plotly_chart():
     
     return json.loads(fig.to_json())
 
+
+# Plotly chart with raw data
+# This endpoint extends the basic Plotly chart by adding the ability to return raw data
+# This is useful for widgets that have a more differentiated interface where it's not
+# as easy to analyze raw data. But also for this data to be the one sent to the AI.
+@register_widget({
+    "name": "Plotly Chart with Raw Data",
+    "description": "Plotly chart with raw data",
+    "type": "chart",
+    "endpoint": "plotly_chart_with_raw_data",
+    "gridData": {"w": 40, "h": 15},
+    "raw": True
+})
+@app.get("/plotly_chart_with_raw_data")
+def get_plotly_chart_with_raw_data(raw: bool = False):
+    # Generate mock time series data
+    mock_data = [
+        {"date": "2023-01-01", "return": 2.5, "transactions": 1250},
+        {"date": "2023-01-02", "return": -1.2, "transactions": 1580},
+        {"date": "2023-01-03", "return": 3.1, "transactions": 1820},
+        {"date": "2023-01-04", "return": 0.8, "transactions": 1450},
+        {"date": "2023-01-05", "return": -2.3, "transactions": 1650},
+        {"date": "2023-01-06", "return": 1.5, "transactions": 1550},
+        {"date": "2023-01-07", "return": 2.8, "transactions": 1780},
+        {"date": "2023-01-08", "return": -0.9, "transactions": 1620},
+        {"date": "2023-01-09", "return": 1.2, "transactions": 1480},
+        {"date": "2023-01-10", "return": 3.5, "transactions": 1920}
+    ]
+
+    if raw:
+        return mock_data
+
+    dates = [datetime.strptime(d["date"], "%Y-%m-%d") for d in mock_data]
+    returns = [d["return"] for d in mock_data]
+    transactions = [d["transactions"] for d in mock_data]
+
+    # Create the figure with secondary y-axis
+    fig = go.Figure()
+
+    # Add the line trace for returns
+    fig.add_trace(go.Scatter(
+        x=dates,
+        y=returns,
+        mode='lines',
+        name='Returns',
+        line=dict(width=2)
+    ))
+
+    # Add the bar trace for transactions
+    fig.add_trace(go.Bar(
+        x=dates,
+        y=transactions,
+        name='Transactions',
+        opacity=0.5
+    ))
+
+    # Update layout with axis titles and secondary y-axis
+    fig.update_layout(
+        xaxis_title='Date',
+        yaxis_title='Returns (%)',
+        yaxis2=dict(
+            title="Transactions",
+            overlaying="y",
+            side="right"
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    # Update the bar trace to use secondary y-axis
+    fig.data[1].update(yaxis="y2")
+
+    return json.loads(fig.to_json())
 
 # Plotly chart with theme
 # This endpoint extends the basic Plotly chart by adding theme support.
