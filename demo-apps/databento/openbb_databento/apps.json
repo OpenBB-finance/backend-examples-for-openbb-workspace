@@ -304,7 +304,7 @@
         "name": "Energy Futures Trades",
         "layout": [
           {
-            "i": "live_grid_metals",
+            "i": "live_grid_energy",
             "x": 0,
             "y": 2,
             "w": 37,
