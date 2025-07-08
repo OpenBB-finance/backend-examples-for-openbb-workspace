@@ -175,14 +175,14 @@ The output will look like this:
 | exchange_timezone   | America/Chicago                         |
 | security_type       | Future                                  |
 | asset_class         | Equity                                  |
-| first_trade_date    | 2023-12-15                              |
+| `first_trade_date`    | 2023-12-15                              |
 | expiration          | 2029-03-16 08:30:00-0500                |
 | currency            | USD                                     |
-| min_price_increment | 0.25                                    |
-| unit_of_measure     | Index Points                            |
-| unit_of_measure_qty | 50.0                                    |
+| `min_price_increment` | 0.25                                    |
+| `unit_of_measure`     | Index Points                            |
+| `unit_of_measure_qty` | 50.0                                    |
 | source              | databento                               |
-| as_of_date          | 2025-06-15 07:05:37-0500                |
+| `as_of_date`          | 2025-06-15 07:05:37-0500                |
 | date                | 2025-06-15                              |
 
 There will now be three tables:
