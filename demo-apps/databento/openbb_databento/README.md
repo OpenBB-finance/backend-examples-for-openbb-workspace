@@ -344,6 +344,21 @@ udf_database.get_symbol_info("ES.c.0")
 }
 ```
 
+### Updating OHLCV Database
+
+The database can be updated with new data from a Python interpreter. In practice, one might set an API background task to update every N minutes/hours.
+
+```python
+from openbb_database.utils.database import CmeDatabase
+
+cme_database = CmeDatabase()
+
+cme_database.update_historical_continuous(table_name="ohlcv_1d_continuous")
+```
+
+This will gather all symbols that are currently in the database, and append new data to the existing.
+
+The updates will be batched in groups of 2000 symbols.
 
 ### Streaming Trades
 
