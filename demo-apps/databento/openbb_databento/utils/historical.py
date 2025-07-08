@@ -420,15 +420,16 @@ def update_historical_continuous_table(
                 + " - "
                 + contract_abbr.get(
                     row["contract_position"],
-                    f"{row['contract_position'] + 1}th Contract",
+                    f"{row['contract_position'] + 1}th",
                 )
+                + " Contract"
             ),
             axis=1,
         )
 
         # Get the column order from existing data if available, otherwise use a standard order
         if not existing_data.empty:
-            column_order = existing_data.columns.tolist()
+            column_order = [col for col in existing_data.columns if col != "index"]
         else:
             column_order = [
                 "date",
@@ -450,8 +451,13 @@ def update_historical_continuous_table(
                 "volume",
             ]
 
+        if results.empty:
+            cme_database.logger.info(
+                f"No new data found for chunk {chunk_idx} in {table_name}"
+            )
+            continue
         # Reorder columns to match existing data structure
-        results = DataFrame(results[column_order])
+        results = DataFrame(data=results[column_order], index=None)
 
         # Filter out overlapping data to prevent duplicates
         if not existing_data.empty:
