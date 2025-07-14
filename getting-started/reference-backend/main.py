@@ -3418,8 +3418,8 @@ def markdown_widget_with_organized_params(
 
 
 @register_widget({
-    "name": "Stock Sparkline Data",
-    "description": "Display stock data with sparkline charts for rate of change",
+    "name": "Stock Sparkline Data - With Min/Max Points",
+    "description": "Display stock data with sparkline charts highlighting minimum and maximum values",
     "category": "bny",
     "searchCategory": "sparkline",
     "defaultViz": "table",
@@ -3476,6 +3476,7 @@ def markdown_widget_with_organized_params(
                     "sparkline": {
                         "type": "area",
                         "options": {
+                            "fill": "rgba(34, 197, 94, 0.2)",
                             "stroke": "#22c55e",
                             "strokeWidth": 2,
                             "tooltip": {
@@ -3484,7 +3485,7 @@ def markdown_widget_with_organized_params(
                             "markers": {
                                 "enabled": True,
                                 "shape": "circle",
-                                "size": 3,
+                                "size": 2,
                                 "fill": "#22c55e"
                             },
                             "padding": {
@@ -3492,6 +3493,20 @@ def markdown_widget_with_organized_params(
                                 "right": 5,
                                 "bottom": 5,
                                 "left": 5
+                            },
+                            "pointsOfInterest": {
+                                "maximum": {
+                                    "fill": "#ffd700",
+                                    "stroke": "#ffb000",
+                                    "strokeWidth": 2,
+                                    "size": 6
+                                },
+                                "minimum": {
+                                    "fill": "#ef4444",
+                                    "stroke": "#dc2626",
+                                    "strokeWidth": 2,
+                                    "size": 6
+                                }
                             }
                         }
                     }
@@ -3502,103 +3517,103 @@ def markdown_widget_with_organized_params(
 })
 @app.get("/sparkline")
 async def get_sparkline_data():
-    """Get sparkline data for stock symbols"""
+    """Get sparkline data for stock symbols - demonstrating min/max points of interest"""
     return [
         {
-            'symbol': 'A',
-            'name': 'Agilent Technologies Inc. Common Stock',
-            'lastPrice': '179.28',
-            'marketCap': 54272119919,
-            'volume': 971760,
-            'sector': 'Capital Goods',
-            'rateOfChange': [1, 2, -6, -7, -2, -7, 3, 4, -3, -8],
-        },
-        {
-            'symbol': 'AAL',
-            'name': 'American Airlines Group Inc. Common Stock',
-            'lastPrice': '19.37',
-            'marketCap': 12541258186,
-            'volume': 20309670,
-            'sector': 'Transportation',
-            'rateOfChange': [4, 9, 8, 6, 1, -3, 0, -8, 2, -8],
-        },
-        {
-            'symbol': 'AAP',
-            'name': 'Advance Auto Parts Inc Advance Auto Parts Inc W/I',
-            'lastPrice': '199.44',
-            'marketCap': 12564867785,
-            'volume': 699427,
-            'sector': 'Consumer Services',
-            'rateOfChange': [-10, 0, 7, -6, 7, 4, 1, 9, 7, 7],
-        },
-        {
             'symbol': 'AAPL',
-            'name': 'Apple Inc. Common Stock',
-            'lastPrice': '154.30',
+            'name': 'Apple Inc.',
+            'lastPrice': '173.50',
             'marketCap': 2675150000000,
             'volume': 57807909,
             'sector': 'Technology',
-            'rateOfChange': [-6, 0, -1, -2, -6, -1, -5, -2, -8, 4],
+            'rateOfChange': [2.1, 5.3, -3.2, 8.7, 1.4, -5.1, 12.3, -2.8, 4.6, -1.9],  # Max: 12.3, Min: -5.1
         },
         {
-            'symbol': 'ABB',
-            'name': 'ABB Ltd Common Stock',
-            'lastPrice': '37.67',
-            'marketCap': 75566020000,
-            'volume': 901811,
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'lastPrice': '2891.70',
+            'marketCap': 1834250000000,
+            'volume': 28967543,
+            'sector': 'Technology',
+            'rateOfChange': [3.8, -2.1, 6.4, 2.5, -4.3, 9.2, -1.7, 5.1, -6.8, 3.3],  # Max: 9.2, Min: -6.8
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'lastPrice': '414.67',
+            'marketCap': 3086420000000,
+            'volume': 32145678,
+            'sector': 'Technology',
+            'rateOfChange': [1.8, 4.2, -2.9, 3.5, 7.1, -3.4, 2.7, -1.2, 6.8, 0.9],  # Max: 7.1, Min: -3.4
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'lastPrice': '3307.04',
+            'marketCap': 1702830000000,
+            'volume': 45678901,
+            'sector': 'Consumer Services',
+            'rateOfChange': [5.2, -3.8, 8.1, 1.9, -7.3, 4.6, -2.1, 9.4, -1.5, 3.2],  # Max: 9.4, Min: -7.3
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'lastPrice': '248.42',
+            'marketCap': 788960000000,
+            'volume': 89123456,
             'sector': 'Consumer Durables',
-            'rateOfChange': [8, -2, -6, 5, 2, 0, -7, -5, 2, -2],
+            'rateOfChange': [8.5, -12.3, 15.7, -4.2, 6.8, -8.9, 11.2, -2.6, 4.1, -6.7],  # Max: 15.7, Min: -12.3
         },
         {
-            'symbol': 'ABBV',
-            'name': 'AbbVie Inc. Common Stock',
-            'lastPrice': '111.62',
-            'marketCap': 197252000000,
-            'volume': 5364090,
-            'sector': 'Health Care',
-            'rateOfChange': [5, 9, 10, 8, 0, 9, 3, 1, 3, 2],
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'lastPrice': '485.34',
+            'marketCap': 1247650000000,
+            'volume': 34567890,
+            'sector': 'Technology',
+            'rateOfChange': [6.3, 2.8, -9.1, 4.7, 8.2, -3.5, 1.9, -5.4, 10.6, -2.3],  # Max: 10.6, Min: -9.1
         },
         {
-            'symbol': 'ABC',
-            'name': 'AmerisourceBergen Corporation Common Stock',
-            'lastPrice': '125.14',
-            'marketCap': 26002479696,
-            'volume': 549618,
-            'sector': 'Health Care',
-            'rateOfChange': [9, 6, 4, 8, 10, 5, 1, 9, 8, 3],
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'lastPrice': '421.73',
+            'marketCap': 187450000000,
+            'volume': 23456789,
+            'sector': 'Consumer Services',
+            'rateOfChange': [4.1, -6.8, 9.3, 2.7, -4.9, 7.5, -1.8, 5.6, -8.2, 3.4],  # Max: 9.3, Min: -8.2
         },
         {
-            'symbol': 'ABEV',
-            'name': 'Ambev S.A. American Depositary Shares (Each representing 1 Common Share)',
-            'lastPrice': '3.14',
-            'marketCap': 49414685958,
-            'volume': 27226664,
-            'sector': 'Consumer Non-Durables',
-            'rateOfChange': [6, 0, 4, 8, -5, 0, -2, -2, -4, -6],
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'lastPrice': '875.28',
+            'marketCap': 2158730000000,
+            'volume': 67890123,
+            'sector': 'Technology',
+            'rateOfChange': [12.8, -5.4, 18.2, 7.3, -11.6, 9.1, -3.7, 16.9, -8.2, 5.8],  # Max: 18.2, Min: -11.6
         },
         {
-            'symbol': 'ABMD',
-            'name': 'ABIOMED Inc. Common Stock',
-            'lastPrice': '372.69',
-            'marketCap': 16912759037,
-            'volume': 137763,
-            'sector': 'Health Care',
-            'rateOfChange': [-1, -8, -6, -5, -2, -2, 0, -8, 0, 8],
+            'symbol': 'CRM',
+            'name': 'Salesforce Inc.',
+            'lastPrice': '287.45',
+            'marketCap': 284560000000,
+            'volume': 15432189,
+            'sector': 'Technology',
+            'rateOfChange': [3.7, 6.9, -8.4, 2.1, 11.5, -4.6, 5.3, -2.8, 7.2, -9.7],  # Max: 11.5, Min: -9.7
         },
         {
-            'symbol': 'ABNB',
-            'name': 'Airbnb Inc. Class A Common Stock',
-            'lastPrice': '158.00',
-            'marketCap': 94231043106,
-            'volume': 4456806,
-            'sector': 'Capital Goods',
-            'rateOfChange': [-4, -8, -4, -9, -5, -5, -1, -1, -3, -1],
+            'symbol': 'PYPL',
+            'name': 'PayPal Holdings Inc.',
+            'lastPrice': '65.82',
+            'marketCap': 74892000000,
+            'volume': 28765432,
+            'sector': 'Miscellaneous',
+            'rateOfChange': [2.4, -7.8, 5.9, 8.3, -10.2, 3.6, -4.1, 6.7, -1.9, 4.8],  # Max: 8.3, Min: -10.2
         },
     ]
 
 @register_widget({
-    "name": "Stock Price Trends - Line Sparklines",
-    "description": "Display stock price trends using line sparklines",
+    "name": "Stock Price Trends - Line Sparklines with First/Last Points",
+    "description": "Display stock price trends using line sparklines highlighting first and last points",
     "category": "bny",
     "searchCategory": "sparkline-line",
     "defaultViz": "table",
@@ -3647,12 +3662,16 @@ async def get_sparkline_data():
                             },
                             "markers": {
                                 "enabled": True,
-                                "size": 0,
-                                "highlightSize": 6
+                                "size": 2,
+                                "fill": "#3b82f6"
                             },
-                            "highlightStyle": {
-                                "fill": "#3b82f6",
-                                "strokeWidth": 0
+                            "pointsOfInterest": {
+                                "firstLast": {
+                                    "fill": "#8b5cf6",
+                                    "stroke": "#7c3aed",
+                                    "strokeWidth": 2,
+                                    "size": 6
+                                }
                             }
                         }
                     }
@@ -3731,7 +3750,7 @@ async def get_line_sparkline_data():
 
 @register_widget({
     "name": "Trading Volume - Area Sparklines",
-    "description": "Display trading volume data using area sparklines",
+    "description": "Display trading volume data using area sparklines with maximum point highlighting",
     "category": "bny",
     "searchCategory": "sparkline-area",
     "defaultViz": "table",
@@ -3757,7 +3776,7 @@ async def get_line_sparkline_data():
                     "chartDataType": "category"
                 },
                 {
-                    "headerName": "Avg Volume",
+                    "headerName": "Avg Volume (M)",
                     "field": "avgVolume",
                     "cellDataType": "number",
                     "chartDataType": "series"
@@ -3781,12 +3800,16 @@ async def get_line_sparkline_data():
                             },
                             "markers": {
                                 "enabled": True,
-                                "size": 0,
-                                "highlightSize": 6
+                                "size": 2,
+                                "fill": "#22c55e"
                             },
-                            "highlightStyle": {
-                                "fill": "#16a34a",
-                                "strokeWidth": 0
+                            "pointsOfInterest": {
+                                "maximum": {
+                                    "fill": "#fbbf24",
+                                    "stroke": "#f59e0b",
+                                    "strokeWidth": 2,
+                                    "size": 6
+                                }
                             }
                         }
                     }
@@ -3801,71 +3824,196 @@ async def get_line_sparkline_data():
         }
     }
 })
+
+@register_widget({
+    "name": "P&L Analysis - Bar Sparklines with Custom Formatter",
+    "description": "Display profit/loss data using bar sparklines with custom positive/negative coloring",
+    "category": "bny",
+    "searchCategory": "sparkline-custom",
+    "defaultViz": "table",
+    "endpoint": "sparkline-custom",
+    "gridData": {
+        "w": 16,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Net P&L ($M)",
+                    "field": "netPL",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "Monthly P&L Trend",
+                    "field": "monthlyPL",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "bar",
+                        "options": {
+                            "direction": "vertical",
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            },
+                            "customFormatter": "(params) => ({ fill: params.yValue >= 0 ? '#22c55e' : '#ef4444', stroke: params.yValue >= 0 ? '#16a34a' : '#dc2626', strokeWidth: 1 })"
+                        }
+                    }
+                },
+                {
+                    "headerName": "Best Month ($M)",
+                    "field": "bestMonth",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                }
+            ]
+        }
+    }
+})
 @app.get("/sparkline-area")
 async def get_area_sparkline_data():
-    """Get area sparkline data for trading volume trends - using Array of Tuples format"""
+    """Get area sparkline data for trading volume trends - demonstrating maximum point highlighting"""
     return [
         {
             'symbol': 'AAPL',
             'name': 'Apple Inc.',
-            'avgVolume': 50234567,
-            'volumeTrend': [[1, 48500000], [2, 52100000], [3, 49800000], [4, 51300000], [5, 50900000], [6, 48700000], [7, 53200000], [8, 50234567], [9, 49600000], [10, 51800000]],
+            'avgVolume': 50.2,
+            'volumeTrend': [48.5, 52.1, 49.8, 51.3, 50.9, 48.7, 53.2, 50.2, 49.6, 51.8, 55.3, 52.4],  # Max: 55.3
             'volumeChangePercent': 3.45
         },
         {
             'symbol': 'GOOGL',
             'name': 'Alphabet Inc. Class A',
-            'avgVolume': 28967543,
-            'volumeTrend': [[1, 27800000], [2, 29500000], [3, 28200000], [4, 30100000], [5, 28967543], [6, 27600000], [7, 31200000], [8, 29800000], [9, 28500000], [10, 29300000]],
+            'avgVolume': 29.0,
+            'volumeTrend': [27.8, 29.5, 28.2, 30.1, 29.0, 27.6, 31.2, 29.8, 28.5, 29.3, 32.1, 30.4],  # Max: 32.1
             'volumeChangePercent': 4.21
         },
         {
             'symbol': 'MSFT',
             'name': 'Microsoft Corporation',
-            'avgVolume': 32145678,
-            'volumeTrend': [[1, 31200000], [2, 33100000], [3, 32800000], [4, 30900000], [5, 32145678], [6, 33500000], [7, 31700000], [8, 32400000], [9, 33200000], [10, 32800000]],
+            'avgVolume': 32.1,
+            'volumeTrend': [31.2, 33.1, 32.8, 30.9, 32.1, 33.5, 31.7, 32.4, 33.2, 32.8, 35.2, 33.9],  # Max: 35.2
             'volumeChangePercent': 2.98
         },
         {
             'symbol': 'AMZN',
             'name': 'Amazon.com Inc.',
-            'avgVolume': 45678901,
-            'volumeTrend': [[1, 44200000], [2, 47300000], [3, 45100000], [4, 46800000], [5, 45678901], [6, 44900000], [7, 48200000], [8, 46500000], [9, 45300000], [10, 47100000]],
+            'avgVolume': 45.7,
+            'volumeTrend': [44.2, 47.3, 45.1, 46.8, 45.7, 44.9, 48.2, 46.5, 45.3, 47.1, 49.8, 47.6],  # Max: 49.8
             'volumeChangePercent': 3.15
         },
         {
             'symbol': 'TSLA',
             'name': 'Tesla Inc.',
-            'avgVolume': 89123456,
-            'volumeTrend': [[1, 85600000], [2, 92800000], [3, 87900000], [4, 91200000], [5, 89123456], [6, 86400000], [7, 93500000], [8, 88700000], [9, 90800000], [10, 89500000]],
+            'avgVolume': 89.1,
+            'volumeTrend': [85.6, 92.8, 87.9, 91.2, 89.1, 86.4, 93.5, 88.7, 90.8, 89.5, 96.2, 91.8],  # Max: 96.2
             'volumeChangePercent': 4.32
         },
         {
             'symbol': 'META',
             'name': 'Meta Platforms Inc.',
-            'avgVolume': 34567890,
-            'volumeTrend': [[1, 33800000], [2, 35600000], [3, 34200000], [4, 35900000], [5, 34567890], [6, 33500000], [7, 36800000], [8, 35100000], [9, 34800000], [10, 35300000]],
+            'avgVolume': 34.6,
+            'volumeTrend': [33.8, 35.6, 34.2, 35.9, 34.6, 33.5, 36.8, 35.1, 34.8, 35.3, 38.1, 36.2],  # Max: 38.1
             'volumeChangePercent': 2.87
         },
         {
             'symbol': 'NFLX',
             'name': 'Netflix Inc.',
-            'avgVolume': 23456789,
-            'volumeTrend': [[1, 22800000], [2, 24200000], [3, 23100000], [4, 24800000], [5, 23456789], [6, 22900000], [7, 25100000], [8, 24300000], [9, 23700000], [10, 24000000]],
+            'avgVolume': 23.5,
+            'volumeTrend': [22.8, 24.2, 23.1, 24.8, 23.5, 22.9, 25.1, 24.3, 23.7, 24.0, 26.3, 24.9],  # Max: 26.3
             'volumeChangePercent': 5.12
         },
         {
             'symbol': 'NVDA',
             'name': 'NVIDIA Corporation',
-            'avgVolume': 67890123,
-            'volumeTrend': [[1, 64200000], [2, 71500000], [3, 66800000], [4, 69300000], [5, 67890123], [6, 65700000], [7, 72800000], [8, 68900000], [9, 66400000], [10, 70200000]],
+            'avgVolume': 67.9,
+            'volumeTrend': [64.2, 71.5, 66.8, 69.3, 67.9, 65.7, 72.8, 68.9, 66.4, 70.2, 74.6, 71.1],  # Max: 74.6
             'volumeChangePercent': 5.87
         }
     ]
 
+@app.get("/sparkline-custom")
+async def get_custom_sparkline_data():
+    """Get P&L sparkline data demonstrating custom formatter for positive/negative values"""
+    return [
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc.',
+            'netPL': 145.2,
+            'monthlyPL': [12.5, -8.2, 15.7, -3.4, 22.1, -11.8, 18.9, -5.6, 24.3, -1.2, 19.8, 7.4],
+            'bestMonth': 24.3
+        },
+        {
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'netPL': 89.6,
+            'monthlyPL': [18.3, -12.1, 8.7, 14.5, -6.9, 21.2, -9.4, 16.8, -4.2, 25.1, -7.8, 13.4],
+            'bestMonth': 25.1
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'netPL': 167.8,
+            'monthlyPL': [14.2, 18.5, -7.3, 12.9, 20.1, -4.8, 15.6, -9.2, 23.4, 11.7, -6.1, 19.3],
+            'bestMonth': 23.4
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'netPL': -23.4,
+            'monthlyPL': [8.9, -15.3, 6.2, -18.7, 11.4, -22.1, 4.8, -13.9, 9.7, -20.5, 3.2, -16.8],
+            'bestMonth': 11.4
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'netPL': 67.9,
+            'monthlyPL': [25.8, -18.4, 12.3, 19.7, -14.2, 8.9, -21.6, 15.1, 22.4, -11.8, 6.5, 18.2],
+            'bestMonth': 25.8
+        },
+        {
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'netPL': 98.3,
+            'monthlyPL': [16.7, 21.3, -8.9, 14.1, 18.5, -5.2, 22.8, -12.4, 17.9, 9.6, -7.1, 20.4],
+            'bestMonth': 22.8
+        },
+        {
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'netPL': 34.7,
+            'monthlyPL': [9.4, -13.2, 7.8, 12.6, -8.1, 15.3, -4.9, 11.7, -16.5, 8.2, 14.9, -2.6],
+            'bestMonth': 15.3
+        },
+        {
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'netPL': 234.5,
+            'monthlyPL': [32.1, -15.8, 28.7, 35.4, -21.3, 26.9, -18.2, 31.6, 38.2, -24.7, 29.3, 33.8],
+            'bestMonth': 38.2
+        }
+    ]
+
 @register_widget({
-    "name": "Monthly Performance - Bar Sparklines",
-    "description": "Display monthly performance data using vertical bar sparklines",
+    "name": "Monthly Performance - Bar Sparklines with Positive/Negative",
+    "description": "Display monthly performance data using bar sparklines with positive/negative styling",
     "category": "bny",
     "searchCategory": "sparkline-bar",
     "defaultViz": "table",
@@ -3904,7 +4052,7 @@ async def get_area_sparkline_data():
                     "sparkline": {
                         "type": "bar",
                         "options": {
-                            "direction": "horizontal",
+                            "direction": "vertical",
                             "xKey": "x",
                             "yKey": "y",
                             "fill": "#8b5cf6",
@@ -3916,9 +4064,17 @@ async def get_area_sparkline_data():
                                 "bottom": 5,
                                 "left": 5
                             },
-                            "highlightStyle": {
-                                "fill": "#a855f7",
-                                "stroke": "#9333ea"
+                            "pointsOfInterest": {
+                                "positiveNegative": {
+                                    "positive": {
+                                        "fill": "#22c55e",
+                                        "stroke": "#16a34a"
+                                    },
+                                    "negative": {
+                                        "fill": "#ef4444",
+                                        "stroke": "#dc2626"
+                                    }
+                                }
                             }
                         }
                     }
@@ -3935,7 +4091,7 @@ async def get_area_sparkline_data():
 })
 @app.get("/sparkline-bar")
 async def get_bar_sparkline_data():
-    """Get bar sparkline data for monthly performance returns - using Array of Objects format"""
+    """Get bar sparkline data for monthly performance returns - demonstrating positive/negative styling"""
     return [
         {
             'symbol': 'AAPL',
@@ -3973,11 +4129,11 @@ async def get_bar_sparkline_data():
         {
             'symbol': 'AMZN',
             'name': 'Amazon.com Inc.',
-            'ytdReturn': 22.89,
+            'ytdReturn': -8.42,
             'monthlyReturns': [
-                {"x": "Jan", "y": 4.2}, {"x": "Feb", "y": -2.1}, {"x": "Mar", "y": 3.8}, {"x": "Apr", "y": 2.5}, 
-                {"x": "May", "y": -1.3}, {"x": "Jun", "y": 4.6}, {"x": "Jul", "y": 2.1}, {"x": "Aug", "y": -3.2}, 
-                {"x": "Sep", "y": 5.1}, {"x": "Oct", "y": 2.8}, {"x": "Nov", "y": 3.4}, {"x": "Dec", "y": 1.9}
+                {"x": "Jan", "y": 4.2}, {"x": "Feb", "y": -2.1}, {"x": "Mar", "y": 3.8}, {"x": "Apr", "y": -5.5}, 
+                {"x": "May", "y": -1.3}, {"x": "Jun", "y": 4.6}, {"x": "Jul", "y": -3.8}, {"x": "Aug", "y": -7.2}, 
+                {"x": "Sep", "y": 5.1}, {"x": "Oct", "y": -2.8}, {"x": "Nov", "y": 3.4}, {"x": "Dec", "y": -4.6}
             ],
             'bestMonth': 5.1
         },
