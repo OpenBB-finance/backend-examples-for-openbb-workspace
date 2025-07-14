@@ -28,7 +28,8 @@ app = FastAPI(
 # This restricts which domains can access the API
 origins = [
     "https://pro.openbb.co",
-    "https://pro.openbb.dev"
+    "https://pro.openbb.dev",
+    "http://localhost:1420"
 ]
 
 # Configure CORS middleware to handle cross-origin requests
@@ -3414,3 +3415,744 @@ def markdown_widget_with_organized_params(
 ## Additional Notes
 {analysis_notes if analysis_notes else "*No additional notes provided*"}
 """
+
+
+@register_widget({
+    "name": "Stock Sparkline Data",
+    "description": "Display stock data with sparkline charts for rate of change",
+    "category": "bny",
+    "searchCategory": "sparkline",
+    "defaultViz": "table",
+    "endpoint": "sparkline",
+    "gridData": {
+        "w": 18,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Last Price",
+                    "field": "lastPrice",
+                    "cellDataType": "text",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "Market Cap",
+                    "field": "marketCap",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "Volume",
+                    "field": "volume",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "Sector",
+                    "field": "sector",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Rate of Change Trend",
+                    "field": "rateOfChange",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "area",
+                        "options": {
+                            "stroke": "#22c55e",
+                            "strokeWidth": 2,
+                            "tooltip": {
+                                "enabled": True
+                            },
+                            "markers": {
+                                "enabled": True,
+                                "shape": "circle",
+                                "size": 3,
+                                "fill": "#22c55e"
+                            },
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+})
+@app.get("/sparkline")
+async def get_sparkline_data():
+    """Get sparkline data for stock symbols"""
+    return [
+        {
+            'symbol': 'A',
+            'name': 'Agilent Technologies Inc. Common Stock',
+            'lastPrice': '179.28',
+            'marketCap': 54272119919,
+            'volume': 971760,
+            'sector': 'Capital Goods',
+            'rateOfChange': [1, 2, -6, -7, -2, -7, 3, 4, -3, -8],
+        },
+        {
+            'symbol': 'AAL',
+            'name': 'American Airlines Group Inc. Common Stock',
+            'lastPrice': '19.37',
+            'marketCap': 12541258186,
+            'volume': 20309670,
+            'sector': 'Transportation',
+            'rateOfChange': [4, 9, 8, 6, 1, -3, 0, -8, 2, -8],
+        },
+        {
+            'symbol': 'AAP',
+            'name': 'Advance Auto Parts Inc Advance Auto Parts Inc W/I',
+            'lastPrice': '199.44',
+            'marketCap': 12564867785,
+            'volume': 699427,
+            'sector': 'Consumer Services',
+            'rateOfChange': [-10, 0, 7, -6, 7, 4, 1, 9, 7, 7],
+        },
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc. Common Stock',
+            'lastPrice': '154.30',
+            'marketCap': 2675150000000,
+            'volume': 57807909,
+            'sector': 'Technology',
+            'rateOfChange': [-6, 0, -1, -2, -6, -1, -5, -2, -8, 4],
+        },
+        {
+            'symbol': 'ABB',
+            'name': 'ABB Ltd Common Stock',
+            'lastPrice': '37.67',
+            'marketCap': 75566020000,
+            'volume': 901811,
+            'sector': 'Consumer Durables',
+            'rateOfChange': [8, -2, -6, 5, 2, 0, -7, -5, 2, -2],
+        },
+        {
+            'symbol': 'ABBV',
+            'name': 'AbbVie Inc. Common Stock',
+            'lastPrice': '111.62',
+            'marketCap': 197252000000,
+            'volume': 5364090,
+            'sector': 'Health Care',
+            'rateOfChange': [5, 9, 10, 8, 0, 9, 3, 1, 3, 2],
+        },
+        {
+            'symbol': 'ABC',
+            'name': 'AmerisourceBergen Corporation Common Stock',
+            'lastPrice': '125.14',
+            'marketCap': 26002479696,
+            'volume': 549618,
+            'sector': 'Health Care',
+            'rateOfChange': [9, 6, 4, 8, 10, 5, 1, 9, 8, 3],
+        },
+        {
+            'symbol': 'ABEV',
+            'name': 'Ambev S.A. American Depositary Shares (Each representing 1 Common Share)',
+            'lastPrice': '3.14',
+            'marketCap': 49414685958,
+            'volume': 27226664,
+            'sector': 'Consumer Non-Durables',
+            'rateOfChange': [6, 0, 4, 8, -5, 0, -2, -2, -4, -6],
+        },
+        {
+            'symbol': 'ABMD',
+            'name': 'ABIOMED Inc. Common Stock',
+            'lastPrice': '372.69',
+            'marketCap': 16912759037,
+            'volume': 137763,
+            'sector': 'Health Care',
+            'rateOfChange': [-1, -8, -6, -5, -2, -2, 0, -8, 0, 8],
+        },
+        {
+            'symbol': 'ABNB',
+            'name': 'Airbnb Inc. Class A Common Stock',
+            'lastPrice': '158.00',
+            'marketCap': 94231043106,
+            'volume': 4456806,
+            'sector': 'Capital Goods',
+            'rateOfChange': [-4, -8, -4, -9, -5, -5, -1, -1, -3, -1],
+        },
+    ]
+
+@register_widget({
+    "name": "Stock Price Trends - Line Sparklines",
+    "description": "Display stock price trends using line sparklines",
+    "category": "bny",
+    "searchCategory": "sparkline-line",
+    "defaultViz": "table",
+    "endpoint": "sparkline-line",
+    "gridData": {
+        "w": 16,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Current Price",
+                    "field": "currentPrice",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "90-Day Price Trend",
+                    "field": "priceTrend",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "line",
+                        "options": {
+                            "stroke": "#3b82f6",
+                            "strokeWidth": 2,
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            },
+                            "markers": {
+                                "enabled": True,
+                                "size": 0,
+                                "highlightSize": 6
+                            },
+                            "highlightStyle": {
+                                "fill": "#3b82f6",
+                                "strokeWidth": 0
+                            }
+                        }
+                    }
+                },
+                {
+                    "headerName": "Change %",
+                    "field": "changePercent",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                }
+            ]
+        }
+    }
+})
+@app.get("/sparkline-line")
+async def get_line_sparkline_data():
+    """Get line sparkline data for stock price trends - using Array of Numbers format"""
+    return [
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc.',
+            'currentPrice': 173.50,
+            'priceTrend': [165.2, 167.1, 169.3, 171.2, 168.9, 170.4, 172.1, 173.5, 175.2, 174.8, 173.1, 173.5],
+            'changePercent': 5.04
+        },
+        {
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'currentPrice': 2891.70,
+            'priceTrend': [2750.3, 2780.1, 2820.4, 2865.2, 2840.7, 2890.1, 2910.3, 2885.6, 2901.4, 2889.2, 2891.7],
+            'changePercent': 5.14
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'currentPrice': 414.67,
+            'priceTrend': [398.2, 405.3, 411.8, 406.9, 409.7, 412.5, 408.3, 415.1, 418.4, 416.2, 414.7],
+            'changePercent': 4.13
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'currentPrice': 3307.04,
+            'priceTrend': [3180.5, 3210.2, 3245.8, 3201.3, 3230.7, 3275.4, 3290.1, 3315.6, 3298.3, 3307.0],
+            'changePercent': 3.98
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'currentPrice': 248.42,
+            'priceTrend': [220.1, 235.6, 242.8, 238.2, 245.9, 251.3, 246.7, 248.4, 252.1, 249.8, 248.4],
+            'changePercent': 12.86
+        },
+        {
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'currentPrice': 485.34,
+            'priceTrend': [461.2, 468.9, 475.3, 472.6, 479.1, 483.7, 481.2, 485.3, 488.9, 486.1, 485.3],
+            'changePercent': 5.24
+        },
+        {
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'currentPrice': 421.73,
+            'priceTrend': [395.8, 402.3, 408.7, 405.2, 412.6, 418.9, 415.3, 421.7, 424.2, 422.8, 421.7],
+            'changePercent': 6.54
+        },
+        {
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'currentPrice': 875.28,
+            'priceTrend': [789.5, 812.3, 845.6, 863.2, 851.7, 869.4, 872.8, 875.3, 881.2, 878.5, 875.3],
+            'changePercent': 10.86
+        }
+    ]
+
+@register_widget({
+    "name": "Trading Volume - Area Sparklines",
+    "description": "Display trading volume data using area sparklines",
+    "category": "bny",
+    "searchCategory": "sparkline-area",
+    "defaultViz": "table",
+    "endpoint": "sparkline-area",
+    "gridData": {
+        "w": 16,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Avg Volume",
+                    "field": "avgVolume",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "30-Day Volume Trend",
+                    "field": "volumeTrend",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "area",
+                        "options": {
+                            "fill": "rgba(34, 197, 94, 0.3)",
+                            "stroke": "#22c55e",
+                            "strokeWidth": 2,
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            },
+                            "markers": {
+                                "enabled": True,
+                                "size": 0,
+                                "highlightSize": 6
+                            },
+                            "highlightStyle": {
+                                "fill": "#16a34a",
+                                "strokeWidth": 0
+                            }
+                        }
+                    }
+                },
+                {
+                    "headerName": "Volume Change %",
+                    "field": "volumeChangePercent",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                }
+            ]
+        }
+    }
+})
+@app.get("/sparkline-area")
+async def get_area_sparkline_data():
+    """Get area sparkline data for trading volume trends - using Array of Tuples format"""
+    return [
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc.',
+            'avgVolume': 50234567,
+            'volumeTrend': [[1, 48500000], [2, 52100000], [3, 49800000], [4, 51300000], [5, 50900000], [6, 48700000], [7, 53200000], [8, 50234567], [9, 49600000], [10, 51800000]],
+            'volumeChangePercent': 3.45
+        },
+        {
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'avgVolume': 28967543,
+            'volumeTrend': [[1, 27800000], [2, 29500000], [3, 28200000], [4, 30100000], [5, 28967543], [6, 27600000], [7, 31200000], [8, 29800000], [9, 28500000], [10, 29300000]],
+            'volumeChangePercent': 4.21
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'avgVolume': 32145678,
+            'volumeTrend': [[1, 31200000], [2, 33100000], [3, 32800000], [4, 30900000], [5, 32145678], [6, 33500000], [7, 31700000], [8, 32400000], [9, 33200000], [10, 32800000]],
+            'volumeChangePercent': 2.98
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'avgVolume': 45678901,
+            'volumeTrend': [[1, 44200000], [2, 47300000], [3, 45100000], [4, 46800000], [5, 45678901], [6, 44900000], [7, 48200000], [8, 46500000], [9, 45300000], [10, 47100000]],
+            'volumeChangePercent': 3.15
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'avgVolume': 89123456,
+            'volumeTrend': [[1, 85600000], [2, 92800000], [3, 87900000], [4, 91200000], [5, 89123456], [6, 86400000], [7, 93500000], [8, 88700000], [9, 90800000], [10, 89500000]],
+            'volumeChangePercent': 4.32
+        },
+        {
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'avgVolume': 34567890,
+            'volumeTrend': [[1, 33800000], [2, 35600000], [3, 34200000], [4, 35900000], [5, 34567890], [6, 33500000], [7, 36800000], [8, 35100000], [9, 34800000], [10, 35300000]],
+            'volumeChangePercent': 2.87
+        },
+        {
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'avgVolume': 23456789,
+            'volumeTrend': [[1, 22800000], [2, 24200000], [3, 23100000], [4, 24800000], [5, 23456789], [6, 22900000], [7, 25100000], [8, 24300000], [9, 23700000], [10, 24000000]],
+            'volumeChangePercent': 5.12
+        },
+        {
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'avgVolume': 67890123,
+            'volumeTrend': [[1, 64200000], [2, 71500000], [3, 66800000], [4, 69300000], [5, 67890123], [6, 65700000], [7, 72800000], [8, 68900000], [9, 66400000], [10, 70200000]],
+            'volumeChangePercent': 5.87
+        }
+    ]
+
+@register_widget({
+    "name": "Monthly Performance - Bar Sparklines",
+    "description": "Display monthly performance data using vertical bar sparklines",
+    "category": "bny",
+    "searchCategory": "sparkline-bar",
+    "defaultViz": "table",
+    "endpoint": "sparkline-bar",
+    "gridData": {
+        "w": 16,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "YTD Return %",
+                    "field": "ytdReturn",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "Monthly Returns",
+                    "field": "monthlyReturns",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "bar",
+                        "options": {
+                            "direction": "horizontal",
+                            "xKey": "x",
+                            "yKey": "y",
+                            "fill": "#8b5cf6",
+                            "stroke": "#7c3aed",
+                            "strokeWidth": 1,
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            },
+                            "highlightStyle": {
+                                "fill": "#a855f7",
+                                "stroke": "#9333ea"
+                            }
+                        }
+                    }
+                },
+                {
+                    "headerName": "Best Month %",
+                    "field": "bestMonth",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                }
+            ]
+        }
+    }
+})
+@app.get("/sparkline-bar")
+async def get_bar_sparkline_data():
+    """Get bar sparkline data for monthly performance returns - using Array of Objects format"""
+    return [
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc.',
+            'ytdReturn': 15.23,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 2.1}, {"x": "Feb", "y": -1.5}, {"x": "Mar", "y": 3.2}, {"x": "Apr", "y": 1.8}, 
+                {"x": "May", "y": -0.7}, {"x": "Jun", "y": 2.8}, {"x": "Jul", "y": 1.2}, {"x": "Aug", "y": -2.1}, 
+                {"x": "Sep", "y": 3.5}, {"x": "Oct", "y": 1.7}, {"x": "Nov", "y": 2.3}, {"x": "Dec", "y": 0.9}
+            ],
+            'bestMonth': 3.5
+        },
+        {
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'ytdReturn': 18.67,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 3.2}, {"x": "Feb", "y": 1.8}, {"x": "Mar", "y": -1.2}, {"x": "Apr", "y": 4.1}, 
+                {"x": "May", "y": 2.3}, {"x": "Jun", "y": -0.9}, {"x": "Jul", "y": 3.7}, {"x": "Aug", "y": 1.5}, 
+                {"x": "Sep", "y": -2.3}, {"x": "Oct", "y": 2.9}, {"x": "Nov", "y": 1.6}, {"x": "Dec", "y": 2.1}
+            ],
+            'bestMonth': 4.1
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'ytdReturn': 12.45,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 1.8}, {"x": "Feb", "y": 2.3}, {"x": "Mar", "y": -0.5}, {"x": "Apr", "y": 2.1}, 
+                {"x": "May", "y": 1.2}, {"x": "Jun", "y": -1.8}, {"x": "Jul", "y": 2.7}, {"x": "Aug", "y": 0.9}, 
+                {"x": "Sep", "y": -1.2}, {"x": "Oct", "y": 2.4}, {"x": "Nov", "y": 1.3}, {"x": "Dec", "y": 1.2}
+            ],
+            'bestMonth': 2.7
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'ytdReturn': 22.89,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 4.2}, {"x": "Feb", "y": -2.1}, {"x": "Mar", "y": 3.8}, {"x": "Apr", "y": 2.5}, 
+                {"x": "May", "y": -1.3}, {"x": "Jun", "y": 4.6}, {"x": "Jul", "y": 2.1}, {"x": "Aug", "y": -3.2}, 
+                {"x": "Sep", "y": 5.1}, {"x": "Oct", "y": 2.8}, {"x": "Nov", "y": 3.4}, {"x": "Dec", "y": 1.9}
+            ],
+            'bestMonth': 5.1
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'ytdReturn': 45.67,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 8.5}, {"x": "Feb", "y": -5.2}, {"x": "Mar", "y": 6.3}, {"x": "Apr", "y": 3.7}, 
+                {"x": "May", "y": -2.8}, {"x": "Jun", "y": 7.9}, {"x": "Jul", "y": 4.2}, {"x": "Aug", "y": -6.1}, 
+                {"x": "Sep", "y": 9.2}, {"x": "Oct", "y": 5.3}, {"x": "Nov", "y": 6.7}, {"x": "Dec", "y": 3.2}
+            ],
+            'bestMonth': 9.2
+        },
+        {
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'ytdReturn': 28.34,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 5.1}, {"x": "Feb", "y": 2.8}, {"x": "Mar", "y": -3.4}, {"x": "Apr", "y": 4.6}, 
+                {"x": "May", "y": 3.2}, {"x": "Jun", "y": -1.7}, {"x": "Jul", "y": 5.8}, {"x": "Aug", "y": 2.3}, 
+                {"x": "Sep", "y": -2.9}, {"x": "Oct", "y": 4.1}, {"x": "Nov", "y": 3.7}, {"x": "Dec", "y": 2.8}
+            ],
+            'bestMonth': 5.8
+        },
+        {
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'ytdReturn': 35.12,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 6.2}, {"x": "Feb", "y": -3.1}, {"x": "Mar", "y": 4.7}, {"x": "Apr", "y": 3.9}, 
+                {"x": "May", "y": -2.4}, {"x": "Jun", "y": 6.8}, {"x": "Jul", "y": 3.5}, {"x": "Aug", "y": -4.2}, 
+                {"x": "Sep", "y": 7.3}, {"x": "Oct", "y": 4.1}, {"x": "Nov", "y": 5.2}, {"x": "Dec", "y": 3.1}
+            ],
+            'bestMonth': 7.3
+        },
+        {
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'ytdReturn': 87.23,
+            'monthlyReturns': [
+                {"x": "Jan", "y": 12.3}, {"x": "Feb", "y": -6.8}, {"x": "Mar", "y": 9.4}, {"x": "Apr", "y": 7.2}, 
+                {"x": "May", "y": -3.9}, {"x": "Jun", "y": 11.6}, {"x": "Jul", "y": 8.1}, {"x": "Aug", "y": -9.2}, 
+                {"x": "Sep", "y": 13.7}, {"x": "Oct", "y": 9.8}, {"x": "Nov", "y": 11.2}, {"x": "Dec", "y": 7.9}
+            ],
+            'bestMonth': 13.7
+        }
+    ]
+
+@register_widget({
+    "name": "Quarterly Earnings - Column Sparklines",
+    "description": "Display quarterly earnings data using column sparklines",
+    "category": "bny",
+    "searchCategory": "sparkline-column",
+    "defaultViz": "table",
+    "endpoint": "sparkline-column",
+    "gridData": {
+        "w": 16,
+        "h": 10
+    },
+    "data": {
+        "table": {
+            "showAll": True,
+            "columnsDefs": [
+                {
+                    "headerName": "Symbol",
+                    "field": "symbol",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Company Name",
+                    "field": "name",
+                    "cellDataType": "text",
+                    "chartDataType": "category"
+                },
+                {
+                    "headerName": "Market Cap",
+                    "field": "marketCap",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                },
+                {
+                    "headerName": "8-Quarter EPS",
+                    "field": "quarterlyEps",
+                    "cellDataType": "object",
+                    "chartDataType": "excluded",
+                    "sparkline": {
+                        "type": "bar",
+                        "options": {
+                            "direction": "horizontal",
+                            "fill": "#f59e0b",
+                            "stroke": "#d97706",
+                            "strokeWidth": 1,
+                            "padding": {
+                                "top": 5,
+                                "right": 5,
+                                "bottom": 5,
+                                "left": 5
+                            },
+                            "highlightStyle": {
+                                "fill": "#fbbf24",
+                                "stroke": "#f59e0b"
+                            }
+                        }
+                    }
+                },
+                {
+                    "headerName": "EPS Growth %",
+                    "field": "epsGrowth",
+                    "cellDataType": "number",
+                    "chartDataType": "series"
+                }
+            ]
+        }
+    }
+})
+@app.get("/sparkline-column")
+async def get_column_sparkline_data():
+    """Get column sparkline data for quarterly earnings per share - using Array of Numbers format"""
+    return [
+        {
+            'symbol': 'AAPL',
+            'name': 'Apple Inc.',
+            'marketCap': 2675150000000,
+            'quarterlyEps': [1.46, 1.52, 1.29, 1.88, 1.56, 1.64, 1.39, 1.97],
+            'epsGrowth': 6.85
+        },
+        {
+            'symbol': 'GOOGL',
+            'name': 'Alphabet Inc. Class A',
+            'marketCap': 1834250000000,
+            'quarterlyEps': [1.05, 1.21, 1.06, 1.33, 1.17, 1.32, 1.15, 1.44],
+            'epsGrowth': 8.57
+        },
+        {
+            'symbol': 'MSFT',
+            'name': 'Microsoft Corporation',
+            'marketCap': 3086420000000,
+            'quarterlyEps': [2.32, 2.45, 2.51, 2.72, 2.48, 2.62, 2.69, 2.93],
+            'epsGrowth': 6.90
+        },
+        {
+            'symbol': 'AMZN',
+            'name': 'Amazon.com Inc.',
+            'marketCap': 1702830000000,
+            'quarterlyEps': [0.31, 0.42, 0.52, 0.68, 0.45, 0.58, 0.71, 0.85],
+            'epsGrowth': 25.0
+        },
+        {
+            'symbol': 'TSLA',
+            'name': 'Tesla Inc.',
+            'marketCap': 788960000000,
+            'quarterlyEps': [0.73, 0.85, 1.05, 1.19, 0.91, 1.12, 1.29, 1.45],
+            'epsGrowth': 24.66
+        },
+        {
+            'symbol': 'META',
+            'name': 'Meta Platforms Inc.',
+            'marketCap': 1247650000000,
+            'quarterlyEps': [2.72, 2.88, 3.03, 3.67, 2.98, 3.21, 3.35, 4.01],
+            'epsGrowth': 9.27
+        },
+        {
+            'symbol': 'NFLX',
+            'name': 'Netflix Inc.',
+            'marketCap': 187450000000,
+            'quarterlyEps': [2.80, 3.19, 3.53, 4.28, 3.29, 3.75, 4.13, 4.82],
+            'epsGrowth': 17.50
+        },
+        {
+            'symbol': 'NVDA',
+            'name': 'NVIDIA Corporation',
+            'marketCap': 2158730000000,
+            'quarterlyEps': [1.01, 1.36, 2.48, 5.16, 4.28, 6.12, 8.92, 12.96],
+            'epsGrowth': 324.75
+        }
+    ]
